@@ -42,6 +42,11 @@ export function PlayScreen(props: { onReview: (gameId: number) => void }): React
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<EngineStatus | null>(null);
   const [movetime, setMovetime] = useState(400);
+  /** Looking back at an earlier position: index into history (-1 = start). null = live game. */
+  const [viewPly, setViewPly] = useState<number | null>(null);
+  /** Hint for the current position: level 1 = which piece, level 2 = the whole move. */
+  const [hint, setHint] = useState<{ fen: string; uci: string; level: 1 | 2 } | null>(null);
+  const [hintLoading, setHintLoading] = useState(false);
   const gen = useRef(0); // invalidates async work from an abandoned game
 
   useEffect(() => {
@@ -49,7 +54,11 @@ export function PlayScreen(props: { onReview: (gameId: number) => void }): React
     void api().settings.get().then((s) => setMovetime(s.botMovetimeMs));
   }, []);
 
-  const sync = (): void => setFen(chess.current.fen());
+  const sync = (): void => {
+    setFen(chess.current.fen());
+    setViewPly(null);
+    setHint(null);
+  };
   const opponentName = (s: Setup): string => (s.opponent === 'maia' ? `Maia ${s.maiaRating}` : `Stockfish level ${s.skill}`);
 
   const finish = useCallback(
@@ -183,6 +192,57 @@ export function PlayScreen(props: { onReview: (gameId: number) => void }): React
     void playMine(uci);
   };
 
+  /** Undo my last move and the bot's reply to it, so it is my turn again. */
+  const takeBackMove = (): void => {
+    if (phase !== 'my-turn') return;
+    const c = chess.current;
+    const hist = c.history({ verbose: true });
+    const lastMine = [...hist].reverse().findIndex((m) => m.color === setup.myColor);
+    if (lastMine < 0) return;
+    const undoCount = lastMine + 1;
+    const firstRemoved = hist.length - undoCount;
+    for (let i = 0; i < undoCount; i++) c.undo();
+    sync();
+    setChecks((m) => new Map([...m].filter(([ply]) => ply < firstRemoved)));
+    setCoach(null);
+    void api().coach.prefetch(c.fen());
+  };
+
+  const showHint = async (): Promise<void> => {
+    if (phase !== 'my-turn') return;
+    const current = chess.current.fen();
+    if (hint && hint.fen === current) {
+      setHint({ ...hint, level: 2 });
+      return;
+    }
+    setHintLoading(true);
+    try {
+      const uci = await api().coach.hint(current);
+      if (uci && chess.current.fen() === current) setHint({ fen: current, uci, level: 1 });
+    } catch (e) {
+      setError(`Hint failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setHintLoading(false);
+    }
+  };
+
+  const historyLen = chess.current.history().length;
+  useEffect(() => {
+    if (phase === 'setup') return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+      const last = historyLen - 1;
+      if (e.key === 'ArrowLeft') setViewPly((v) => Math.max(-1, (v ?? last) - 1));
+      else if (e.key === 'ArrowRight') setViewPly((v) => (v === null || v + 1 >= last ? null : v + 1));
+      else if (e.key === 'Home') setViewPly(-1);
+      else if (e.key === 'End' || e.key === 'Escape') setViewPly(null);
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [phase, historyLen]);
+
   const takeBack = (): void => {
     const ply = chess.current.history().length - 1;
     chess.current.undo();
@@ -210,31 +270,47 @@ export function PlayScreen(props: { onReview: (gameId: number) => void }): React
 
   // Board decorations
   const history = chess.current.history({ verbose: true });
-  const last = history[history.length - 1];
+  const viewing = viewPly !== null && phase !== 'setup';
+  const viewed = viewing ? history[viewPly] : undefined;
+  const viewFen = viewing ? (viewed ? viewed.after : (history[0]?.before ?? fen)) : fen;
+  const last = viewing ? viewed : history[history.length - 1];
   const shapes: DrawShape[] = [];
+  const activeHint = !viewing && hint && hint.fen === fen && phase === 'my-turn' ? hint : null;
+  if (activeHint?.level === 2) shapes.push({ orig: uciFrom(activeHint.uci), dest: uciTo(activeHint.uci), brush: 'blue' });
   if (coach?.revealed && coach.check.bestMoveUci) {
     shapes.push({ orig: uciFrom(coach.check.moveUci), dest: uciTo(coach.check.moveUci), brush: 'red' });
     shapes.push({ orig: uciFrom(coach.check.bestMoveUci), dest: uciTo(coach.check.bestMoveUci), brush: 'green' });
   }
   const highlight = coach?.revealed ? (coach.result.explanation.highlightSquares as readonly Key[]) : [];
   const orientation = flipped ? (setup.myColor === 'w' ? 'black' : 'white') : cg(setup.myColor);
-  const myTurn = phase === 'my-turn';
+  const myTurn = phase === 'my-turn' && !viewing;
+  const canTakeBack = phase === 'my-turn' && history.some((m) => m.color === setup.myColor);
 
   return (
     <div className="play">
       <div className="board-col">
         <Board
-          fen={fen}
+          fen={viewFen}
           orientation={orientation}
-          turnColor={cg(chess.current.turn())}
+          turnColor={cg(viewing ? new Chess(viewFen).turn() : chess.current.turn())}
           movableColor={myTurn ? cg(setup.myColor) : undefined}
           dests={myTurn ? legalDests(chess.current) : undefined}
           lastMove={last ? [last.from, last.to] : undefined}
-          check={chess.current.isCheck()}
+          check={viewing ? new Chess(viewFen).isCheck() : chess.current.isCheck()}
           shapes={shapes}
-          highlight={highlight}
+          highlight={viewing ? [] : highlight}
+          hintSquare={activeHint ? uciFrom(activeHint.uci) : undefined}
           onMove={onBoardMove}
         />
+        {phase !== 'setup' && (
+          <div className="nav-row">
+            <button title="Start (Home)" onClick={() => setViewPly(-1)} disabled={history.length === 0}>⏮</button>
+            <button title="Back (←)" onClick={() => setViewPly((v) => Math.max(-1, (v ?? history.length - 1) - 1))} disabled={history.length === 0 || viewPly === -1}>◀</button>
+            <button title="Forward (→)" onClick={() => setViewPly((v) => (v === null || v + 1 >= history.length - 1 ? null : v + 1))} disabled={!viewing}>▶</button>
+            <button title="Back to the game (End)" onClick={() => setViewPly(null)} disabled={!viewing}>⏭</button>
+            {viewing && <span className="viewing">Looking back · move {viewPly + 1} of {history.length}</span>}
+          </div>
+        )}
         {promo && <PromotionPicker color={setup.myColor} onPick={onPromo} onCancel={() => { setPromo(null); sync(); }} />}
       </div>
 
@@ -304,9 +380,18 @@ export function PlayScreen(props: { onReview: (gameId: number) => void }): React
               </span>
             </div>
             <div className="toolbar">
+              <button className="primary" onClick={() => void showHint()} disabled={phase !== 'my-turn' || viewing || hintLoading || activeHint?.level === 2}>
+                {hintLoading ? 'Thinking…' : activeHint ? 'Show the move' : 'Hint'}
+              </button>
+              <button onClick={takeBackMove} disabled={!canTakeBack || viewing}>Take back</button>
               <button onClick={() => setFlipped((f) => !f)}>Flip board</button>
               {phase !== 'over' && <button onClick={resign}>Resign</button>}
               <button onClick={() => { gen.current += 1; setPhase('setup'); }}>New game</button>
+              {activeHint && (
+                <span className="muted hint-text">
+                  {activeHint.level === 1 ? 'The highlighted piece has the best move. Press again to see it.' : 'Blue arrow: the engine\'s best move.'}
+                </span>
+              )}
               {phase === 'over' && over?.gameId != null && (
                 <button className="primary" onClick={() => over.gameId != null && props.onReview(over.gameId)}>
                   Review game
@@ -330,7 +415,7 @@ export function PlayScreen(props: { onReview: (gameId: number) => void }): React
 
         {phase !== 'setup' && (
           <div className="panel grow">
-            <MoveList sans={chess.current.history()} checks={checks} />
+            <MoveList sans={chess.current.history()} checks={checks} current={viewing ? viewPly : history.length - 1} onSelect={(p) => setViewPly(p >= history.length - 1 ? null : p)} />
           </div>
         )}
       </div>

@@ -24,14 +24,42 @@ export function resolveStockfish(settings: Settings, resourcesDir: string): stri
   return firstExisting([
     settings.stockfishPath,
     process.env.STOCKFISH_PATH ?? '',
+    path.join(resourcesDir, 'engines', 'stockfish'), // bundled with the Flatpak
     ...STOCKFISH_CANDIDATES,
     inPath('stockfish') ?? '',
-    path.join(resourcesDir, 'engines', 'stockfish'),
   ]);
 }
 
+/** True inside the Flatpak sandbox. */
+export const IN_FLATPAK = Boolean(process.env.FLATPAK_ID) || existsSync('/.flatpak-info');
+
+/** How to start a binary: directly, or (Flatpak) on the host through `flatpak-spawn --host`. */
+export interface Launch {
+  readonly path: string;
+  readonly args: readonly string[];
+  /** Path to show the user. */
+  readonly display: string;
+}
+
+/**
+ * lc0 is not bundled. Outside Flatpak it is found as usual. Inside Flatpak the host's /usr is visible
+ * read-only under /run/host (finish-arg --filesystem=host-os:ro) and runs on the host via flatpak-spawn.
+ */
+export function resolveLc0Launch(settings: Settings, inFlatpak = IN_FLATPAK, exists: (p: string) => boolean = existsSync): Launch | null {
+  const candidates = [settings.lc0Path, process.env.LC0_PATH ?? '', ...LC0_CANDIDATES].filter(Boolean);
+  if (!inFlatpak) {
+    const p = candidates.find((c) => exists(c)) ?? inPath('lc0');
+    return p ? { path: p, args: [], display: p } : null;
+  }
+  for (const c of candidates) {
+    if (exists(c)) return { path: c, args: [], display: c };
+    if (c.startsWith('/') && exists(`/run/host${c}`)) return { path: 'flatpak-spawn', args: ['--host', c], display: `${c} (host)` };
+  }
+  return null;
+}
+
 export function resolveLc0(settings: Settings): string | null {
-  return firstExisting([settings.lc0Path, process.env.LC0_PATH ?? '', ...LC0_CANDIDATES, inPath('lc0') ?? '']);
+  return resolveLc0Launch(settings)?.display ?? null;
 }
 
 /** Maia weight files are named like maia-1100.pb.gz; returns rating -> file. */
@@ -52,6 +80,7 @@ export function findMaiaWeights(dir: string): Map<number, string> {
 export class EngineManager {
   private coachEngine: UciEngine | null = null;
   private opponentEngine: UciEngine | null = null;
+  private bulkEngine: UciEngine | null = null;
   private readonly maia = new Map<number, UciEngine>();
   private stockfishPath: string | null = null;
   private stockfishError: string | null = null;
@@ -64,7 +93,9 @@ export class EngineManager {
   private startStockfish(name: string, threads: string): UciEngine | null {
     this.stockfishPath = resolveStockfish(this.getSettings(), this.resourcesDir);
     if (!this.stockfishPath) {
-      this.stockfishError = 'Stockfish not found. Install it with: sudo pacman -S stockfish';
+      this.stockfishError = IN_FLATPAK
+        ? 'The bundled Stockfish is missing from this build.'
+        : 'Stockfish not found. Install it (paru -S stockfish) or set its path in Settings.';
       return null;
     }
     this.stockfishError = null;
@@ -77,6 +108,13 @@ export class EngineManager {
     return this.coachEngine;
   }
 
+  /** Separate engine for background analysis (imports, auto-analysis) so live coaching never waits behind it. */
+  bulk(): UciEngine {
+    if (!this.bulkEngine || !this.bulkEngine.alive) this.bulkEngine = this.startStockfish('stockfish-bulk', '2');
+    if (!this.bulkEngine) throw new Error(this.stockfishError ?? 'Stockfish unavailable');
+    return this.bulkEngine;
+  }
+
   opponent(): UciEngine {
     if (!this.opponentEngine || !this.opponentEngine.alive) this.opponentEngine = this.startStockfish('stockfish-opponent', '1');
     if (!this.opponentEngine) throw new Error(this.stockfishError ?? 'Stockfish unavailable');
@@ -87,11 +125,11 @@ export class EngineManager {
     const existing = this.maia.get(rating);
     if (existing?.alive) return existing;
     const s = this.getSettings();
-    const lc0 = resolveLc0(s);
-    if (!lc0) throw new Error('lc0 not found. Install lc0 (AUR: lc0) or set its path in Settings.');
+    const lc0 = resolveLc0Launch(s);
+    if (!lc0) throw new Error('lc0 not found. Install lc0 (paru -S lc0) or set its path in Settings.');
     const weights = findMaiaWeights(s.maiaWeightsDir).get(rating);
     if (!weights) throw new Error(`No Maia weights for ${rating} in ${s.maiaWeightsDir || '(no folder set)'}`);
-    const e = new UciEngine({ name: `maia-${rating}`, path: lc0, args: [`--weights=${weights}`], options: { Threads: '1' } });
+    const e = new UciEngine({ name: `maia-${rating}`, path: lc0.path, args: [...lc0.args, `--weights=${weights}`], options: { Threads: '1' } });
     this.maia.set(rating, e);
     return e;
   }
@@ -124,6 +162,8 @@ export class EngineManager {
   dispose(): void {
     this.coachEngine?.dispose();
     this.opponentEngine?.dispose();
+    this.bulkEngine?.dispose();
+    this.bulkEngine = null;
     for (const e of this.maia.values()) e.dispose();
     this.coachEngine = null;
     this.opponentEngine = null;

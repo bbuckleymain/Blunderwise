@@ -1,5 +1,5 @@
 /** The typed bridge between renderer and main. Types only: safe to import from both sides. */
-import type { Color, ExplainResult, MistakeContext } from '../explain/types';
+import type { Color, ExplainResult, GamePhase, MistakeContext, MotifSide, MotifTag } from '../explain/types';
 import type { MoveClass } from '../analysis/classify';
 
 export type OpponentKind = 'stockfish' | 'maia';
@@ -41,8 +41,12 @@ export interface MoveCheck {
   readonly instant: ExplainResult | null;
 }
 
+export type GameSource = 'bot' | 'lichess' | 'chesscom';
+
 export interface GameRecord {
   readonly id: number;
+  readonly source: GameSource;
+  readonly analyzed: boolean;
   readonly createdAt: string;
   readonly myColor: Color;
   readonly opponent: string;
@@ -72,6 +76,74 @@ export interface ReviewProgress {
   readonly total: number;
 }
 
+/** One stored mistake (inaccuracy or worse) from an analysed game. */
+export interface MistakeRow {
+  readonly ply: number;
+  readonly fen: string;
+  readonly playedUci: string;
+  readonly playedSan: string;
+  readonly bestUci: string;
+  readonly bestSan: string;
+  readonly classification: MoveClass;
+  readonly phase: GamePhase;
+  readonly tags: readonly MotifTag[];
+  readonly sides: readonly MotifSide[];
+  readonly winBefore: number;
+  readonly winAfter: number;
+}
+
+export interface DrillRecord {
+  readonly id: number;
+  readonly fen: string;
+  readonly myColor: Color;
+  readonly playedUci: string;
+  readonly playedSan: string;
+  readonly bestUci: string;
+  readonly bestSan: string;
+  readonly classification: string;
+  readonly tags: readonly MotifTag[];
+  readonly gameId: number | null;
+  readonly dueAt: number;
+  readonly intervalDays: number;
+  readonly ease: number;
+  readonly reps: number;
+  readonly lapses: number;
+}
+
+export interface DrillAnswer {
+  readonly correct: boolean;
+  /** The engine's verdict on the move you tried (with an explanation context when it was a mistake). */
+  readonly check: MoveCheck;
+  readonly nextDueAt: number;
+}
+
+export interface DrillCounts {
+  readonly total: number;
+  readonly due: number;
+  readonly nextDueAt: number | null;
+}
+
+export interface ReportData {
+  readonly gamesAnalyzed: number;
+  readonly myMoves: number;
+  readonly byClassification: { readonly inaccuracy: number; readonly mistake: number; readonly blunder: number };
+  /** Mistakes and blunders per motif. allowed = opponent's tactic you allowed; missed = your tactic you missed. */
+  readonly byTag: readonly { readonly tag: MotifTag; readonly count: number; readonly allowed: number; readonly missed: number; readonly blunders: number }[];
+  readonly byPhase: readonly { readonly phase: string; readonly count: number; readonly blunders: number }[];
+}
+
+export interface LibraryProgress {
+  readonly game: number;
+  readonly games: number;
+  readonly move: number;
+  readonly moves: number;
+}
+
+export interface ImportResult {
+  readonly fetched: number;
+  readonly added: number;
+}
+
 export type StopOn = 'blunder' | 'mistake';
 export type LlmProvider = 'gemini' | 'openrouter';
 
@@ -85,6 +157,8 @@ export interface Settings {
   readonly stockfishPath: string;
   readonly lc0Path: string;
   readonly maiaWeightsDir: string;
+  readonly lichessUsername: string;
+  readonly chesscomUsername: string;
 }
 
 export interface KeyStatus {
@@ -104,11 +178,26 @@ export interface CoachApi {
     prefetch(fen: string): Promise<void>;
     checkMove(req: MoveCheckRequest): Promise<MoveCheck>;
     narrate(ctx: MistakeContext): Promise<ExplainResult>;
+    /** The engine's best move (UCI) in this position, for hints. */
+    hint(fen: string): Promise<string | null>;
   };
   games: {
     save(req: SaveGameRequest): Promise<number>;
     list(): Promise<GameRecord[]>;
     get(id: number): Promise<GameRecord | null>;
+  };
+  library: {
+    importLichess(username: string, max: number): Promise<ImportResult>;
+    importChessCom(username: string, max: number): Promise<ImportResult>;
+    analyzeAll(): Promise<number>;
+    analyzeGame(id: number): Promise<void>;
+    onProgress(cb: (p: LibraryProgress) => void): () => void;
+    report(): Promise<ReportData>;
+  };
+  drills: {
+    due(tag: MotifTag | null, limit: number): Promise<DrillRecord[]>;
+    counts(): Promise<DrillCounts>;
+    answer(id: number, moveUci: string): Promise<DrillAnswer>;
   };
   review: {
     analyze(pgn: string, myColor: Color): Promise<ReviewedMove[]>;
@@ -130,6 +219,7 @@ export const IPC = {
   prefetch: 'coach:prefetch',
   checkMove: 'coach:checkMove',
   narrate: 'coach:narrate',
+  hint: 'coach:hint',
   gamesSave: 'games:save',
   gamesList: 'games:list',
   gamesGet: 'games:get',
@@ -140,4 +230,13 @@ export const IPC = {
   keyStatus: 'settings:keyStatus',
   setApiKey: 'settings:setApiKey',
   testApiKey: 'settings:testApiKey',
+  importLichess: 'library:importLichess',
+  importChessCom: 'library:importChessCom',
+  analyzeAll: 'library:analyzeAll',
+  analyzeGame: 'library:analyzeGame',
+  libraryProgress: 'library:progress',
+  report: 'library:report',
+  drillsDue: 'drills:due',
+  drillsCounts: 'drills:counts',
+  drillsAnswer: 'drills:answer',
 } as const;

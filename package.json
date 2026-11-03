@@ -9,7 +9,9 @@
     "build": "node scripts/build-main.mjs && vite build",
     "start": "npm run build && electron .",
     "dev": "node scripts/dev.mjs",
-    "dist": "npm run build && electron-builder --linux pacman"
+    "dist": "npm run build && node scripts/fetch-stockfish.mjs && electron-builder --linux flatpak",
+    "eval:puzzles": "tsx scripts/eval-puzzles.ts",
+    "fetch:stockfish": "node scripts/fetch-stockfish.mjs"
   },
   "dependencies": {},
   "devDependencies": {
@@ -39,7 +41,7 @@
     "email": "falconunicorn17@gmail.com"
   },
   "build": {
-    "appId": "app.blunderwise.desktop",
+    "appId": "app.blunderwise.Blunderwise",
     "productName": "Blunderwise",
     "directories": {
       "output": "release"
@@ -50,24 +52,40 @@
     ],
     "linux": {
       "target": [
-        "pacman"
+        "flatpak"
       ],
       "category": "Game",
       "executableName": "blunderwise",
       "synopsis": "Play a bot and get your blunders explained",
       "maintainer": "falconunicorn17@gmail.com"
     },
-    "pacman": {
-      "depends": [
-        "gtk3",
-        "nss",
-        "alsa-lib",
-        "libxss",
-        "libnotify",
-        "stockfish"
+    "publish": null,
+    "extraResources": [
+      {
+        "from": "resources/engines",
+        "to": "engines"
+      }
+    ],
+    "flatpak": {
+      "runtime": "org.freedesktop.Platform",
+      "runtimeVersion": "25.08",
+      "sdk": "org.freedesktop.Sdk",
+      "base": "org.electronjs.Electron2.BaseApp",
+      "baseVersion": "25.08",
+      "finishArgs": [
+        "--share=ipc",
+        "--share=network",
+        "--socket=wayland",
+        "--socket=fallback-x11",
+        "--device=dri",
+        "--talk-name=org.freedesktop.secrets",
+        "--talk-name=org.kde.kwalletd5",
+        "--talk-name=org.kde.kwalletd6",
+        "--filesystem=home:ro",
+        "--filesystem=host-os:ro",
+        "--talk-name=org.freedesktop.Flatpak"
       ]
-    },
-    "publish": null
+    }
   },
   "homepage": "https://github.com/YOUR_GITHUB_USER/blunderwise"
 }

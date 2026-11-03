@@ -33,7 +33,7 @@ h3, h4 { margin: 8px 0; }
 .tab.active { background: var(--panel-2); border-color: var(--border); }
 .content { flex: 1; min-height: 0; padding: 14px; overflow: auto; }
 .play { display: flex; gap: 16px; height: 100%; min-height: 0; }
-.board-col { position: relative; flex: 0 0 auto; height: 100%; aspect-ratio: 1 / 1; max-width: 62vw; display: flex; flex-direction: column; }
+.board-col { position: relative; flex: 0 0 auto; width: min(62vw, calc(100vh - 150px)); display: flex; flex-direction: column; }
 .board { width: 100%; aspect-ratio: 1 / 1; }
 .board .cg-wrap { width: 100%; height: 100%; }
 .side-col { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
@@ -74,8 +74,10 @@ h3, h4 { margin: 8px 0; }
 .promo { background: var(--panel); border-radius: 12px; padding: 14px; border: 1px solid var(--border); }
 .promo-title { margin-bottom: 8px; text-align: center; }
 .promo-row { display: flex; gap: 8px; width: auto !important; height: auto !important; }
-.promo-btn { width: 72px; height: 72px; padding: 0; position: relative; background: #f0d9b5; }
-.promo-btn piece { position: absolute; inset: 0; background-size: cover; }
+.promo-btn { width: 84px; height: 84px; padding: 0; position: relative; background: #f0d9b5; overflow: hidden; }
+.promo-btn:hover:not(:disabled) { background: #f7e7c8; border-color: var(--accent); }
+/* chessground sizes every piece to one board square (12.5%); in the picker it must fill the button. */
+.promo-btn piece { position: absolute; inset: 6px; width: auto !important; height: auto !important; transform: none !important; background-size: contain; background-repeat: no-repeat; background-position: center; }
 .nav-hint { color: var(--muted); font-size: 13px; margin-top: 6px; text-align: center; }
 .mistake-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow: auto; }
 .mistake-item { text-align: left; }
@@ -90,3 +92,33 @@ h3, h4 { margin: 8px 0; }
 .games table { width: 100%; border-collapse: collapse; }
 .games td { padding: 8px; border-bottom: 1px solid var(--border); }
 square.coach-highlight { background: rgba(255, 200, 0, 0.35); }
+.ok-box { background: #24302a; border: 1px solid #3f6b46; border-radius: 8px; padding: 10px; margin: 8px 0; }
+.bad-box { background: #3a2526; border: 1px solid #7a3338; border-radius: 8px; padding: 10px; margin: 8px 0; }
+.drill-empty { max-width: 560px; margin: 40px auto; }
+.games-page { display: flex; flex-direction: column; gap: 14px; }
+.import-row { display: flex; gap: 10px; align-items: flex-end; }
+.import-row label { flex: 1; margin: 6px 0; }
+.import-row button { margin-bottom: 6px; white-space: nowrap; }
+.report { display: flex; flex-direction: column; gap: 14px; max-width: 1000px; }
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.stat { text-align: center; }
+.stat-num { font-size: 30px; font-weight: 700; }
+.stat-num.blunder { color: var(--blunder); }
+.stat-num.mistake { color: var(--mistake); }
+.stat-num.inaccuracy { color: var(--inaccuracy); }
+.headline-panel { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.headline-panel button { margin-left: auto; }
+.tag-table { width: 100%; border-collapse: collapse; }
+.tag-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.tag-name { width: 200px; }
+.tag-bar { width: 40%; }
+.num { width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+.small { font-size: 13px; }
+.bar-track { height: 12px; background: #1b1c1f; border-radius: 6px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent); border-radius: 6px; }
+.bar-fill.dim { background: #5b6068; }
+square.hint-square { background: radial-gradient(rgba(70, 150, 255, 0.55) 30%, rgba(70, 150, 255, 0.25) 70%); box-shadow: inset 0 0 0 4px rgba(70, 150, 255, 0.9); }
+.nav-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.nav-row button { padding: 4px 10px; }
+.viewing { color: var(--inaccuracy); font-size: 14px; margin-left: 6px; }
+.hint-text { align-self: center; font-size: 13px; }

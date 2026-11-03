@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS: Settings = {
   stockfishPath: '',
   lc0Path: '',
   maiaWeightsDir: '',
+  lichessUsername: '',
+  chesscomUsername: '',
 };
 
 const KEY_SETTING: Record<LlmProvider, string> = { gemini: 'geminiKey', openrouter: 'openrouterKey' };
@@ -35,6 +37,8 @@ export function sanitize(raw: Partial<Settings>, base: Settings): Settings {
     stockfishPath: typeof raw.stockfishPath === 'string' ? raw.stockfishPath.trim() : base.stockfishPath,
     lc0Path: typeof raw.lc0Path === 'string' ? raw.lc0Path.trim() : base.lc0Path,
     maiaWeightsDir: typeof raw.maiaWeightsDir === 'string' ? raw.maiaWeightsDir.trim() : base.maiaWeightsDir,
+    lichessUsername: typeof raw.lichessUsername === 'string' ? raw.lichessUsername.trim() : base.lichessUsername,
+    chesscomUsername: typeof raw.chesscomUsername === 'string' ? raw.chesscomUsername.trim() : base.chesscomUsername,
   };
 }
 

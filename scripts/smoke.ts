@@ -10,8 +10,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { Board, see } from '../explain/board';
 
-interface Loc { count(): Promise<number>; isVisible(): Promise<boolean>; click(): Promise<void>; boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>; getAttribute(n: string): Promise<string | null>; waitFor(o?: { timeout?: number; state?: string }): Promise<void>; first(): Loc }
-interface Page { locator(s: string): Loc; getByText(t: string | RegExp, o?: { exact?: boolean }): Loc; getByRole(r: string, o: { name: string | RegExp }): Loc; mouse: { click(x: number, y: number): Promise<void> }; screenshot(o: { path: string }): Promise<void>; waitForTimeout(ms: number): Promise<void>; setViewportSize?(s: { width: number; height: number }): Promise<void> }
+interface Loc { getByRole(r: string, o: { name: string | RegExp }): Loc; count(): Promise<number>; isVisible(): Promise<boolean>; click(): Promise<void>; boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>; getAttribute(n: string): Promise<string | null>; waitFor(o?: { timeout?: number; state?: string }): Promise<void>; first(): Loc }
+interface Page { keyboard: { type(t: string): Promise<void>; press(k: string): Promise<void> }; evaluate<T>(fn: () => Promise<T>): Promise<T>; locator(s: string): Loc; getByText(t: string | RegExp, o?: { exact?: boolean }): Loc; getByRole(r: string, o: { name: string | RegExp; exact?: boolean }): Loc; mouse: { click(x: number, y: number): Promise<void> }; screenshot(o: { path: string }): Promise<void>; waitForTimeout(ms: number): Promise<void>; setViewportSize?(s: { width: number; height: number }): Promise<void> }
 interface ElectronApp { firstWindow(): Promise<Page>; close(): Promise<void> }
 interface PW { _electron: { launch(o: { executablePath: string; args: string[]; env: Record<string, string> }): Promise<ElectronApp> } }
 
@@ -64,6 +64,48 @@ async function main(): Promise<void> {
   await waitMyTurn();
   await move(page, 'e2e4');
   await waitMyTurn();
+
+  // Hint: first press highlights a piece, second press shows the move.
+  await page.getByRole('button', { name: 'Hint' }).click();
+  await page.locator('square.hint-square').waitFor({ timeout: 20000 });
+  await page.screenshot({ path: path.join(OUT, '1b-hint-piece.png') });
+  await page.getByRole('button', { name: 'Show the move' }).click();
+  await page.getByText(/Blue arrow/).waitFor({ timeout: 5000 });
+  await page.screenshot({ path: path.join(OUT, '1c-hint-move.png') });
+  console.log('hint OK');
+
+  // Promotion picker: piece images must fill their buttons (regression: they rendered at 12.5% size).
+  const pieceSize = await page.evaluate(async () => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="promo"><div class="promo-row cg-wrap"><button class="promo-btn"><piece class="queen white"></piece></button></div></div>';
+    document.body.appendChild(host);
+    const r = host.querySelector('piece')?.getBoundingClientRect();
+    host.remove();
+    return r ? Math.round(r.width) : 0;
+  });
+  if (pieceSize < 60) throw new Error(`promotion pieces are too small (${pieceSize}px)`);
+  console.log(`promotion picker OK (${pieceSize}px pieces)`);
+
+  // Look back at earlier moves, then return.
+  await page.keyboard.press('ArrowLeft');
+  await page.getByText(/Looking back/).waitFor({ timeout: 5000 });
+  await page.waitForTimeout(300);
+  if ((await page.locator('.board:visible svg.cg-shapes g g').count()) > 0) throw new Error('hint arrow still shown while looking back');
+  await page.screenshot({ path: path.join(OUT, '1d-looking-back.png') });
+  await page.keyboard.press('End');
+  await page.waitForTimeout(200);
+  if ((await page.getByText(/Looking back/).count()) > 0) throw new Error('did not return to the game');
+  console.log('look back OK');
+
+  // Take back my move (and the bot reply), then replay it.
+  const beforeTakeBack = await fenNow();
+  await page.getByRole('button', { name: 'Take back', exact: true }).click();
+  await page.waitForTimeout(300);
+  if ((await fenNow()) === beforeTakeBack) throw new Error('take back did nothing');
+  if (!(await fenNow()).startsWith('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w')) throw new Error('take back did not return to the start');
+  console.log('take back move OK');
+  await move(page, 'e2e4');
+  await waitMyTurn();
   await move(page, 'd1h5');
   await page.waitForTimeout(300);
 
@@ -104,7 +146,7 @@ async function main(): Promise<void> {
   await page.waitForTimeout(400);
   await page.screenshot({ path: path.join(OUT, '3-coach-revealed.png') });
   const blunderFen = await fenNow();
-  await page.getByRole('button', { name: 'Take back' }).click();
+  await page.locator('.coach-card').getByRole('button', { name: 'Take back' }).click();
   await waitMyTurn();
   if ((await fenNow()) === blunderFen) throw new Error('take back did not undo the move');
   console.log('take back OK');
@@ -128,6 +170,40 @@ async function main(): Promise<void> {
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.waitForTimeout(800);
   await page.screenshot({ path: path.join(OUT, '5-settings.png') });
+
+  // Drills: the kept blunder should have become a drill (auto-analysis runs after the game is saved).
+  await page.getByRole('button', { name: 'Drills' }).click();
+  let best = '';
+  for (let t = 0; t < 100 && !best; t++) {
+    best = await page.evaluate(async () => {
+      const w = window as unknown as { coachApi: { drills: { due(tag: null, n: number): Promise<{ bestUci: string }[]> } } };
+      return (await w.coachApi.drills.due(null, 1))[0]?.bestUci ?? '';
+    });
+    if (!best) await page.waitForTimeout(300);
+  }
+  if (!best) throw new Error('no drill was created from the blunder');
+  await page.getByRole('button', { name: 'Games' }).click();
+  await page.getByRole('button', { name: 'Drills' }).click();
+  await page.getByText(/Find a better move than/).waitFor({ timeout: 10000 });
+  await page.screenshot({ path: path.join(OUT, '6-drill.png') });
+  await move(page, best);
+  await page.getByText('Correct!').waitFor({ timeout: 20000 });
+  await page.screenshot({ path: path.join(OUT, '7-drill-correct.png') });
+  console.log('drill OK');
+
+  await page.getByRole('button', { name: 'Report' }).click();
+  await page.getByText('games analysed').waitFor({ timeout: 10000 });
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(OUT, '8-report.png') });
+  console.log('report OK');
+
+  await page.getByRole('button', { name: 'Games' }).click();
+  await page.locator('input[placeholder="e.g. TwoCan"]').first().click();
+  await page.keyboard.type('TwoCan');
+  await page.getByRole('button', { name: 'Import from Lichess' }).click();
+  await page.locator('.games-page .error, .games-page .ok').first().waitFor({ timeout: 30000 });
+  await page.screenshot({ path: path.join(OUT, '9-games-import.png') });
+  console.log('import path OK (result shown)');
   await app.close();
   console.log(`SMOKE OK, screenshots in ${OUT}`);
 }

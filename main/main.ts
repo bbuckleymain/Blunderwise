@@ -1,6 +1,8 @@
 import { BrowserWindow, app, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import { IPC, type BotMoveRequest, type LlmProvider, type MoveCheckRequest, type SaveGameRequest, type Settings } from '../shared/api';
+import type { MotifTag } from '../explain/types';
+import { Library } from './library';
 import type { Color, MistakeContext } from '../explain/types';
 import { CoachService } from './coach';
 import { Db } from './db';
@@ -44,6 +46,7 @@ void app.whenReady().then(() => {
   const settings = new SettingsStore(db);
   engines = new EngineManager(() => settings.get(), process.resourcesPath);
   const coach = new CoachService(engines, db, settings);
+  const library = new Library(db, coach);
   const store = db;
   const eng = engines;
 
@@ -62,7 +65,26 @@ void app.whenReady().then(() => {
   ipcMain.handle(IPC.prefetch, (_e, fen: string) => coach.prefetch(fen));
   ipcMain.handle(IPC.checkMove, (_e, req: MoveCheckRequest) => coach.checkMove(req));
   ipcMain.handle(IPC.narrate, (_e, ctx: MistakeContext) => coach.narrate(ctx));
-  ipcMain.handle(IPC.gamesSave, (_e, req: SaveGameRequest) => store.saveGame(req));
+  ipcMain.handle(IPC.hint, async (_e, fen: string) => (await coach.analyzeFen(fen)).bestMove);
+  ipcMain.handle(IPC.gamesSave, (_e, req: SaveGameRequest) => {
+    const id = store.saveGame(req);
+    library.analyzeInBackground(id); // feeds the report and drills
+    return id;
+  });
+  ipcMain.handle(IPC.importLichess, (_e, username: string, max: number) => {
+    settings.set({ lichessUsername: username });
+    return library.importLichess(username, max);
+  });
+  ipcMain.handle(IPC.importChessCom, (_e, username: string, max: number) => {
+    settings.set({ chesscomUsername: username });
+    return library.importChessCom(username, max);
+  });
+  ipcMain.handle(IPC.analyzeAll, (e) => library.analyzeAll((p) => e.sender.send(IPC.libraryProgress, p)));
+  ipcMain.handle(IPC.analyzeGame, (_e, id: number) => library.analyzeGame(id));
+  ipcMain.handle(IPC.report, () => store.report());
+  ipcMain.handle(IPC.drillsDue, (_e, tag: MotifTag | null, limit: number) => store.dueDrills(Date.now(), tag, limit));
+  ipcMain.handle(IPC.drillsCounts, () => store.drillCounts(Date.now()));
+  ipcMain.handle(IPC.drillsAnswer, (_e, id: number, uci: string) => library.answerDrill(id, uci));
   ipcMain.handle(IPC.gamesList, () => store.listGames());
   ipcMain.handle(IPC.gamesGet, (_e, id: number) => store.getGame(id));
   ipcMain.handle(IPC.reviewAnalyze, (e, pgn: string, myColor: Color) =>

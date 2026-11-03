@@ -45,6 +45,8 @@ const settings: Settings = {
   stockfishPath: '',
   lc0Path: fakeLc0,
   maiaWeightsDir: weights,
+  lichessUsername: '',
+  chesscomUsername: '',
 };
 
 const engines: { dispose(): void }[] = [];
@@ -94,4 +96,21 @@ describe('UciEngine (real Stockfish, WASM build)', () => {
     expect(a.bestMove).toMatch(/^[a-h][1-8][a-h][1-8]$/);
     expect(b.bestMove).toBe('c1c4');
   }, 30000);
+});
+
+describe('lc0 inside Flatpak', () => {
+  const s = { ...settings, lc0Path: '' };
+  it('runs the host lc0 through flatpak-spawn when only /run/host has it', async () => {
+    const { resolveLc0Launch } = await import('../main/engineManager');
+    const l = resolveLc0Launch(s, true, (p) => p === '/run/host/usr/bin/lc0');
+    expect(l).toEqual({ path: 'flatpak-spawn', args: ['--host', '/usr/bin/lc0'], display: '/usr/bin/lc0 (host)' });
+  });
+  it('outside Flatpak uses the binary directly', async () => {
+    const { resolveLc0Launch } = await import('../main/engineManager');
+    expect(resolveLc0Launch(s, false, (p) => p === '/usr/bin/lc0')?.path).toBe('/usr/bin/lc0');
+  });
+  it('reports nothing when lc0 is not installed', async () => {
+    const { resolveLc0Launch } = await import('../main/engineManager');
+    expect(resolveLc0Launch(s, true, () => false)).toBeNull();
+  });
 });

@@ -15,6 +15,9 @@ import type { SettingsStore } from './settings';
 
 const fenKey = (fen: string): string => fen.split(' ').slice(0, 4).join(' ');
 
+/** live = the game you are playing; bulk = background analysis on its own engine. */
+export type Lane = 'live' | 'bulk';
+
 function uciOf(m: { from: string; to: string; promotion?: string }): string {
   return `${m.from}${m.to}${m.promotion ?? ''}`;
 }
@@ -30,7 +33,7 @@ export class CoachService {
   ) {}
 
   /** Engine eval for the side to move, cached in SQLite and de-duplicated while in flight. */
-  analyzeFen(fen: string): Promise<EngineEval> {
+  analyzeFen(fen: string, lane: Lane = 'live'): Promise<EngineEval> {
     const depth = this.settings.get().analysisDepth;
     const key = `${fenKey(fen)}@${depth}`;
     const chess = new Chess(fen);
@@ -40,8 +43,7 @@ export class CoachService {
     if (cached) return Promise.resolve(cached);
     const running = this.inflight.get(key);
     if (running) return running;
-    const job = this.engines
-      .coach()
+    const job = (lane === 'bulk' ? this.engines.bulk() : this.engines.coach())
       .evaluate(fen, depth)
       .then((e) => {
         this.db.putAnalysis(fenKey(fen), depth, e);
@@ -56,10 +58,10 @@ export class CoachService {
     await this.analyzeFen(fen).catch(() => undefined);
   }
 
-  async checkMove(req: MoveCheckRequest): Promise<MoveCheck> {
+  async checkMove(req: MoveCheckRequest, lane: Lane = 'live'): Promise<MoveCheck> {
     const chess = new Chess(req.fenBefore);
     const move = chess.move(parseUciMove(req.moveUci));
-    const before = await this.analyzeFen(req.fenBefore);
+    const before = await this.analyzeFen(req.fenBefore, lane);
     const best = before.bestMove;
     const bestSan = best ? sanOf(req.fenBefore, best) : null;
 
@@ -70,7 +72,7 @@ export class CoachService {
     if (chess.isCheckmate()) {
       return { ...base, classification: 'good', winProbBefore: wpB, winProbAfter: 100, stop: false, ctx: null, instant: null };
     }
-    const afterRaw = await this.analyzeFen(chess.fen());
+    const afterRaw = await this.analyzeFen(chess.fen(), lane);
     const evalAfter = negateScore({ cp: afterRaw.cp, mate: afterRaw.mate });
     const wpA = winProbability(evalAfter);
     let classification = classifyMove(wpB, wpA);
@@ -133,7 +135,7 @@ export class CoachService {
     }
   }
 
-  async reviewGame(pgn: string, myColor: 'w' | 'b', onProgress: (p: ReviewProgress) => void): Promise<ReviewedMove[]> {
+  async reviewGame(pgn: string, myColor: 'w' | 'b', onProgress: (p: ReviewProgress) => void, lane: Lane = 'live'): Promise<ReviewedMove[]> {
     const game = new Chess();
     game.loadPgn(pgn);
     const history = game.history({ verbose: true });
@@ -145,7 +147,7 @@ export class CoachService {
       const mine = m.color === myColor;
       let check: MoveCheck | null = null;
       if (mine) {
-        check = await this.checkMove({ fenBefore: m.before, moveUci: uciOf(m), myColor });
+        check = await this.checkMove({ fenBefore: m.before, moveUci: uciOf(m), myColor }, lane);
         done += 1;
         onProgress({ done, total });
       }

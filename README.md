@@ -10,27 +10,25 @@ defender, missed promotion, king safety), and Gemini only puts those verified fa
 validator rejects any Gemini answer that mentions a move, square or piece that isn't in the facts,
 or claims a tactic the detectors didn't find, and falls back to a built-in template.
 
-## Install on CachyOS
+## Install (Flatpak)
 
-Stockfish is in the AUR (not the official repos). CachyOS ships the `paru` AUR helper:
+Blunderwise is built as a Flatpak. Stockfish is bundled inside it, so there is nothing else to install.
+
+One-time setup on CachyOS (needs Node.js 22+ to build):
 
 ```bash
-paru -S stockfish
+sudo pacman -S --needed flatpak flatpak-builder nodejs npm
 ```
 
 ```bash
-sudo pacman -U release/blunderwise-0.1.0.pacman
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 ```
 
-Then start **Blunderwise** from your app menu (or run `blunderwise`).
+```bash
+flatpak install --user -y flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08 org.electronjs.Electron2.BaseApp//25.08
+```
 
-If you'd rather use the official prebuilt Stockfish (stockfishchess.org → Linux → AVX2), copy it to
-`/usr/local/bin/stockfish` and install with
-`sudo pacman -U --assume-installed stockfish release/blunderwise-0.1.0.pacman`.
-
-### Build the package yourself
-
-Needs Node.js 22+ (`sudo pacman -S nodejs npm`).
+Build and install (from the project folder):
 
 ```bash
 npm install
@@ -40,7 +38,23 @@ npm install
 npm run dist
 ```
 
-The package lands in `release/`.
+```bash
+flatpak install --user -y release/*.flatpak
+```
+
+Start **Blunderwise** from your app menu, or run:
+
+```bash
+flatpak run app.blunderwise.Blunderwise
+```
+
+Notes:
+- `npm run dist` downloads the official Stockfish 17.1 build for CPUs with AVX2 (any CPU that runs CachyOS's
+  optimised x86-64-v3 packages has it). For an older CPU: `STOCKFISH_BUILD=x86-64-sse41-popcnt npm run fetch:stockfish -- --force`, then `npm run dist` again.
+- Your data lives in `~/.var/app/app.blunderwise.Blunderwise/config/Blunderwise/`.
+- Sandbox permissions: network (AI coach, game import), display/GPU, your keyring (to encrypt API keys),
+  read-only access to your home folder (Maia weights) and to the system's `/usr` plus permission to start host
+  programs (to run lc0 for Maia, which isn't bundled).
 
 ## AI coach key (optional but recommended)
 
@@ -67,6 +81,8 @@ Maia plays like humans of a given rating, so its mistakes look like real games. 
 paru -S lc0
 ```
 
+(The Flatpak runs your system's lc0 on the host, so install it normally.)
+
 ```bash
 mkdir -p ~/maia && cd ~/maia && for r in 1100 1200 1300 1400 1500 1600 1700 1800 1900; do curl -LO https://raw.githubusercontent.com/CSSLab/maia-chess/master/maia_weights/maia-$r.pb.gz; done
 ```
@@ -83,10 +99,18 @@ and click **Save & restart engines**. Maia then shows up as an opponent in **Pla
   - **Play on**: keep the move and continue.
   Smaller mistakes don't interrupt you; they're marked in the move list (`?!`, `?`, `??`).
   Settings → Coaching can make it stop on mistakes too.
+- **Drills**: every mistake and blunder becomes a puzzle: find a better move than the one you played. Get it
+  right and it comes back in 1 day, then 3, then longer; miss it and it comes back in 10 minutes. Wrong answers
+  get the coach's explanation. The Report's **Drill** buttons practise one theme (e.g. only forks).
+- **Games → Import**: enter your Lichess and/or Chess.com username and import your recent games, then
+  **Analyse all** (runs in the background on its own Stockfish, so you can keep playing). Imported games get
+  reviews, drills and count towards the report, just like games against the bot.
+- **Report**: blunders/mistakes per game, what kind of tactic they were (split into ones you allowed and ones
+  you missed), which game phase they happen in, and your biggest leak, with a button to drill it.
 - **Games → Review**: every saved game, analysed with a progress bar. ←/→ step through moves, ↑/↓ jump between
   mistakes, Home/End. Clicking a mistake shows the arrows and the coach card.
 
-Analyses and Gemini explanations are cached in `~/.config/Blunderwise/blunderwise.sqlite`.
+Analyses, explanations, games and drills are stored in `blunderwise.sqlite` in the app's data folder (see above).
 
 ## Development
 
@@ -99,7 +123,7 @@ npm run dev          # Vite + Electron with hot reload for the UI
 ```
 
 ```bash
-npm test             # 211 unit tests (detectors, validator, pipeline, engines)
+npm test             # unit tests (detectors, validator, pipeline, engines, importers, drills)
 ```
 
 ```bash
@@ -117,6 +141,23 @@ OPENROUTER_API_KEY=... npm run harness   # measures the validator's rejection ra
 ```bash
 npm run fixtures:generate             # re-derive fixture evals/lines with Stockfish (WASM)
 ```
+
+### Grading the detectors on real puzzles
+
+The 33 fixtures are what the detectors were tuned on. For an honest accuracy number, grade them on the
+Lichess puzzle database (millions of real positions, each tagged with its tactic):
+
+```bash
+curl -LO https://database.lichess.org/lichess_db_puzzle.csv.zst
+```
+
+```bash
+npm run eval:puzzles -- lichess_db_puzzle.csv.zst --n 1000
+```
+
+It prints recall and precision per tactic and writes `puzzle-eval.json` with links to puzzles the detectors
+got wrong, ready for fixing. Options: `--depth 12 --min-rating 600 --max-rating 2000 --seed 1`.
+Lichess themes aren't exhaustive, so the precision column is a lower bound.
 
 ```bash
 npm run build && xvfb-run -a npx tsx scripts/smoke.ts   # end-to-end: plays a game, blunders, reviews

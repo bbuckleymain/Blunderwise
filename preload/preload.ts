@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC, type CoachApi, type ReviewProgress } from '../shared/api';
+import { IPC, type CoachApi, type LibraryProgress, type ReviewProgress } from '../shared/api';
 
 /** ipcRenderer.invoke is untyped; pin the result type at the boundary instead of leaking `any`. */
 function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
@@ -16,11 +16,29 @@ const api: CoachApi = {
     prefetch: (fen) => invoke(IPC.prefetch, fen),
     checkMove: (req) => invoke(IPC.checkMove, req),
     narrate: (ctx) => invoke(IPC.narrate, ctx),
+    hint: (fen) => invoke(IPC.hint, fen),
   },
   games: {
     save: (req) => invoke(IPC.gamesSave, req),
     list: () => invoke(IPC.gamesList),
     get: (id) => invoke(IPC.gamesGet, id),
+  },
+  library: {
+    importLichess: (username, max) => invoke(IPC.importLichess, username, max),
+    importChessCom: (username, max) => invoke(IPC.importChessCom, username, max),
+    analyzeAll: () => invoke(IPC.analyzeAll),
+    analyzeGame: (id) => invoke(IPC.analyzeGame, id),
+    onProgress: (cb) => {
+      const listener = (_e: Electron.IpcRendererEvent, p: LibraryProgress): void => cb(p);
+      ipcRenderer.on(IPC.libraryProgress, listener);
+      return () => ipcRenderer.removeListener(IPC.libraryProgress, listener);
+    },
+    report: () => invoke(IPC.report),
+  },
+  drills: {
+    due: (tag, limit) => invoke(IPC.drillsDue, tag, limit),
+    counts: () => invoke(IPC.drillsCounts),
+    answer: (id, uci) => invoke(IPC.drillsAnswer, id, uci),
   },
   review: {
     analyze: (pgn, myColor) => invoke(IPC.reviewAnalyze, pgn, myColor),
