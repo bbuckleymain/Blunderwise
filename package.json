@@ -1,0 +1,73 @@
+{
+  "name": "blunderwise",
+  "version": "0.1.0",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.scripts.json && tsc -p tsconfig.node.json && tsc -p tsconfig.web.json",
+    "test": "vitest run",
+    "fixtures:generate": "tsx scripts/generate-fixtures.ts",
+    "harness": "tsx scripts/harness.ts",
+    "build": "node scripts/build-main.mjs && vite build",
+    "start": "npm run build && electron .",
+    "dev": "node scripts/dev.mjs",
+    "dist": "npm run build && electron-builder --linux pacman"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@vitejs/plugin-react": "6.1.2",
+    "chess.js": "1.4.0",
+    "chessground": "9.2.1",
+    "electron": "44.7.2",
+    "electron-builder": "26.17.0",
+    "esbuild": "0.28.2",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "stockfish": "17.1.0",
+    "tsx": "4.19.2",
+    "typescript": "5.6.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.4"
+  },
+  "private": true,
+  "type": "module",
+  "main": "out/main/main.cjs",
+  "description": "Blunderwise: play a bot, get your blunders explained in plain English.",
+  "author": {
+    "name": "Blunderwise",
+    "email": "falconunicorn17@gmail.com"
+  },
+  "build": {
+    "appId": "app.blunderwise.desktop",
+    "productName": "Blunderwise",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "pacman"
+      ],
+      "category": "Game",
+      "executableName": "blunderwise",
+      "synopsis": "Play a bot and get your blunders explained",
+      "maintainer": "falconunicorn17@gmail.com"
+    },
+    "pacman": {
+      "depends": [
+        "gtk3",
+        "nss",
+        "alsa-lib",
+        "libxss",
+        "libnotify",
+        "stockfish"
+      ]
+    },
+    "publish": null
+  },
+  "homepage": "https://github.com/YOUR_GITHUB_USER/blunderwise"
+}

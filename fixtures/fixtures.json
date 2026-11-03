@@ -1,0 +1,1696 @@
+[
+  {
+    "id": "hang-knight-d4",
+    "description": "Italian: Nd4?? drops the knight to the e5 pawn",
+    "expected": [
+      "hangingPiece"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+      "movePlayedUci": "f3d4",
+      "bestMoveUci": "d2d3",
+      "evalBefore": {
+        "cp": 23,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -457,
+        "mate": null
+      },
+      "winProbBefore": 52.1,
+      "winProbAfter": 15.7,
+      "bestLine": [
+        "d2d3",
+        "f8c5",
+        "b1c3",
+        "h7h6",
+        "e1g1",
+        "e8g8",
+        "h2h3",
+        "a7a5",
+        "a2a3",
+        "a5a4",
+        "c3e2",
+        "d7d6"
+      ],
+      "refutationLine": [
+        "e5d4",
+        "e1g1",
+        "f8e7",
+        "d2d3",
+        "e8g8",
+        "c2c3",
+        "d7d5",
+        "c4b3",
+        "a7a5",
+        "f1e1",
+        "c8g4",
+        "f2f3"
+      ],
+      "moveNumber": 4,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "hang-queen-g5",
+    "description": "2...Qg5?? puts the queen where the f3 knight takes it",
+    "expected": [
+      "hangingPiece"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+      "movePlayedUci": "d8g5",
+      "bestMoveUci": "b8c6",
+      "evalBefore": {
+        "cp": -35,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -649,
+        "mate": null
+      },
+      "winProbBefore": 46.8,
+      "winProbAfter": 8.4,
+      "bestLine": [
+        "b8c6",
+        "d2d4",
+        "e5d4",
+        "f3d4",
+        "g8f6",
+        "d4c6",
+        "d7c6",
+        "d1d8",
+        "e8d8",
+        "f2f3",
+        "c8e6",
+        "c1e3"
+      ],
+      "refutationLine": [
+        "f3g5",
+        "h7h6",
+        "g5f3",
+        "d7d5",
+        "e4d5",
+        "c8g4",
+        "f1e2",
+        "g4f3",
+        "g2f3",
+        "e5e4",
+        "f3e4",
+        "b8d7"
+      ],
+      "moveNumber": 2,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "hang-rook-b2",
+    "description": "Rb2?? walks into the d4 bishop",
+    "expected": [
+      "hangingPiece"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "6k1/5pp1/7p/8/3b4/8/5PPP/1R4K1 w - - 0 1",
+      "movePlayedUci": "b1b2",
+      "bestMoveUci": "b1b8",
+      "evalBefore": {
+        "cp": 213,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -446,
+        "mate": null
+      },
+      "winProbBefore": 68.7,
+      "winProbAfter": 16.2,
+      "bestLine": [
+        "b1b8",
+        "g8h7",
+        "b8f8",
+        "f7f6",
+        "f8d8",
+        "d4e5",
+        "d8d5",
+        "h6h5",
+        "h2h3",
+        "h7h6",
+        "g1f1",
+        "e5b2"
+      ],
+      "refutationLine": [
+        "d4b2",
+        "f2f4",
+        "g8f8",
+        "g1f2",
+        "f8e7",
+        "f2f3",
+        "e7e6",
+        "h2h3",
+        "e6f5"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "missed-capture-queen",
+    "description": "Black hung the queen on g5; Nc3 ignores it",
+    "expected": [
+      "missedCapture"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "rnb1kbnr/pppp1ppp/8/4p1q1/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+      "movePlayedUci": "b1c3",
+      "bestMoveUci": "f3g5",
+      "evalBefore": {
+        "cp": 649,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": 194,
+        "mate": null
+      },
+      "winProbBefore": 91.6,
+      "winProbAfter": 67.1,
+      "bestLine": [
+        "f3g5",
+        "h7h6",
+        "g5f3",
+        "d7d5",
+        "e4d5",
+        "c8g4",
+        "f1e2",
+        "g4f3",
+        "g2f3",
+        "e5e4",
+        "f3e4",
+        "b8d7"
+      ],
+      "refutationLine": [
+        "g5f6",
+        "c3d5",
+        "f6d8",
+        "f3e5",
+        "d7d6",
+        "e5f3",
+        "g8e7",
+        "d5e3",
+        "d6d5",
+        "e4d5",
+        "e7d5",
+        "d2d4"
+      ],
+      "moveNumber": 3,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "missed-capture-knight",
+    "description": "White hung a knight on d4; ...h6 ignores it",
+    "expected": [
+      "missedCapture"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2BNP3/8/PPPP1PPP/RNBQK2R b KQkq - 5 4",
+      "movePlayedUci": "h7h6",
+      "bestMoveUci": "e5d4",
+      "evalBefore": {
+        "cp": 457,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": 28,
+        "mate": null
+      },
+      "winProbBefore": 84.3,
+      "winProbAfter": 52.6,
+      "bestLine": [
+        "e5d4",
+        "e1g1",
+        "f8e7",
+        "d2d3",
+        "e8g8",
+        "c2c3",
+        "d7d5",
+        "c4b3",
+        "a7a5",
+        "f1e1",
+        "c8g4",
+        "f2f3"
+      ],
+      "refutationLine": [
+        "d4c6",
+        "b7c6",
+        "d2d4",
+        "e5d4",
+        "d1d4",
+        "d7d5",
+        "e4d5",
+        "c6d5",
+        "c4b5",
+        "c8d7",
+        "b5d7",
+        "d8d7"
+      ],
+      "moveNumber": 4,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "missed-capture-rook",
+    "description": "Free rook on c4; h3 lets Black trade it off",
+    "expected": [
+      "missedCapture"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "6k1/5ppp/8/8/2r5/8/3K1PPP/2R5 w - - 0 1",
+      "movePlayedUci": "h2h3",
+      "bestMoveUci": "c1c4",
+      "evalBefore": {
+        "cp": 697,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -19,
+        "mate": null
+      },
+      "winProbBefore": 92.9,
+      "winProbAfter": 48.3,
+      "bestLine": [
+        "c1c4",
+        "g8f8",
+        "d2e3",
+        "f8e7",
+        "e3d4",
+        "f7f6",
+        "c4a4",
+        "e7d7",
+        "a4a2",
+        "d7c7",
+        "f2f4",
+        "c7d7"
+      ],
+      "refutationLine": [
+        "c4d4",
+        "d2e1",
+        "d4e4",
+        "e1f1",
+        "e4e8",
+        "g2g3",
+        "e8a8",
+        "c1c2",
+        "g7g5",
+        "c2e2"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "fork-allowed-knight",
+    "description": "...Qd7?? lets Nf6+ fork king and queen",
+    "expected": [
+      "fork"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "r2q2k1/ppp2p1p/6p1/8/4N3/8/PPP2PPP/5RK1 b - - 0 1",
+      "movePlayedUci": "d8d7",
+      "bestMoveUci": "g8h8",
+      "evalBefore": {
+        "cp": 514,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -444,
+        "mate": null
+      },
+      "winProbBefore": 86.9,
+      "winProbAfter": 16.3,
+      "bestLine": [
+        "g8h8",
+        "f1e1",
+        "d8e7",
+        "e1e3",
+        "e7e5",
+        "e4c3",
+        "e5d6",
+        "g2g3",
+        "d6d2",
+        "e3d3",
+        "d2c1",
+        "g1g2"
+      ],
+      "refutationLine": [
+        "e4f6",
+        "g8g7",
+        "f6d7",
+        "a8d8",
+        "d7e5",
+        "a7a5",
+        "e5c4",
+        "f7f5",
+        "a2a4",
+        "b7b6",
+        "f1e1",
+        "f5f4"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "fork-missed-knight",
+    "description": "Nf6+ forks king and queen; a3 misses it",
+    "expected": [
+      "fork"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "r5k1/pppq1p1p/6p1/8/4N3/8/PPP2PPP/5RK1 w - - 0 1",
+      "movePlayedUci": "a2a3",
+      "bestMoveUci": "e4f6",
+      "evalBefore": {
+        "cp": 444,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -516,
+        "mate": null
+      },
+      "winProbBefore": 83.7,
+      "winProbAfter": 13,
+      "bestLine": [
+        "e4f6",
+        "g8g7",
+        "f6d7",
+        "a8d8",
+        "d7e5",
+        "a7a5",
+        "e5c4",
+        "f7f5",
+        "a2a4",
+        "b7b6",
+        "f1e1",
+        "f5f4"
+      ],
+      "refutationLine": [
+        "d7f5",
+        "f2f3",
+        "g8h8",
+        "h2h3",
+        "g6g5",
+        "f1e1",
+        "f5a5",
+        "b2b4",
+        "a5b6",
+        "e4c5",
+        "b6f6",
+        "c5d7"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "fork-allowed-pawn",
+    "description": "...Rc5?? lines both rooks up for the d4 pawn fork",
+    "expected": [
+      "fork"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "2r1k3/pp3ppp/8/4r3/8/2PP4/PP3PPP/5RK1 b - - 0 1",
+      "movePlayedUci": "c8c5",
+      "bestMoveUci": "e5e2",
+      "evalBefore": {
+        "cp": 477,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": 30,
+        "mate": null
+      },
+      "winProbBefore": 85.3,
+      "winProbAfter": 52.8,
+      "bestLine": [
+        "e5e2",
+        "f2f4",
+        "f7f5",
+        "b2b4",
+        "c8c6",
+        "f1a1",
+        "e2e7",
+        "d3d4",
+        "c6e6"
+      ],
+      "refutationLine": [
+        "d3d4",
+        "e5e2",
+        "d4c5",
+        "e2b2",
+        "h2h4",
+        "a7a5",
+        "g2g4",
+        "a5a4",
+        "a2a3",
+        "b2b3",
+        "f1e1",
+        "e8d7"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "pin-allowed-knight",
+    "description": "...d6?? opens the a4-e8 diagonal; the c6 knight is pinned and d5 wins it",
+    "expected": [
+      "pin"
+    ],
+    "alsoOk": [
+      "kingSafetyBlunder"
+    ],
+    "ctx": {
+      "fen": "4k3/pp1p1ppp/2n5/8/B2P4/8/PPP2PPP/6K1 b - - 0 1",
+      "movePlayedUci": "d7d6",
+      "bestMoveUci": "c6d4",
+      "evalBefore": {
+        "cp": -31,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -482,
+        "mate": null
+      },
+      "winProbBefore": 47.1,
+      "winProbAfter": 14.5,
+      "bestLine": [
+        "c6d4",
+        "c2c3",
+        "d4e6",
+        "a4c2",
+        "e6c7",
+        "c2d1",
+        "d7d5",
+        "g1f1",
+        "e8e7",
+        "f1e2",
+        "e7d6",
+        "a2a3"
+      ],
+      "refutationLine": [
+        "d4d5",
+        "e8d7",
+        "d5c6",
+        "b7c6",
+        "a4b3",
+        "a7a5",
+        "g1f1",
+        "d7c7",
+        "c2c3",
+        "d6d5",
+        "f1e1",
+        "d5d4"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "pin-allowed-queen",
+    "description": "...Kf8?? pins the queen to the king on the b4-f8 diagonal",
+    "expected": [
+      "pin"
+    ],
+    "alsoOk": [
+      "hangingPiece"
+    ],
+    "ctx": {
+      "fen": "6k1/pp2qppp/8/8/1B6/P7/1PP2PPP/6K1 b - - 0 1",
+      "movePlayedUci": "g8f8",
+      "bestMoveUci": "e7d8",
+      "evalBefore": {
+        "cp": 605,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -266,
+        "mate": null
+      },
+      "winProbBefore": 90.3,
+      "winProbAfter": 27.3,
+      "bestLine": [
+        "e7d8",
+        "g2g3",
+        "d8d1",
+        "g1g2",
+        "d1c2",
+        "b4c3",
+        "g7g5",
+        "g2g1",
+        "f7f6",
+        "h2h3",
+        "c2d1",
+        "g1g2"
+      ],
+      "refutationLine": [
+        "b4e7",
+        "f8e7",
+        "g1f1",
+        "e7d6",
+        "f1e2",
+        "b7b5",
+        "e2d3",
+        "d6c5",
+        "h2h4",
+        "f7f6",
+        "h4h5",
+        "f6f5"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "skewer-allowed-rook",
+    "description": "...Qa5?? puts the queen behind the king on the 5th rank: Rf5+",
+    "expected": [
+      "skewer"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "3q4/8/8/3k4/8/8/6PP/5RK1 b - - 0 1",
+      "movePlayedUci": "d8a5",
+      "bestMoveUci": "d8b6",
+      "evalBefore": {
+        "cp": 0,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -761,
+        "mate": null
+      },
+      "winProbBefore": 50,
+      "winProbAfter": 5.7,
+      "bestLine": [
+        "d8b6",
+        "g1h1",
+        "d5e4",
+        "g2g3",
+        "e4e3",
+        "h1g2",
+        "b6c6",
+        "g2g1",
+        "c6g6",
+        "f1f4",
+        "g6c2",
+        "h2h3"
+      ],
+      "refutationLine": [
+        "f1f5",
+        "d5d4",
+        "f5a5",
+        "d4e3",
+        "h2h4",
+        "e3f4",
+        "g1h2",
+        "f4g4",
+        "g2g3",
+        "g4f3",
+        "h2h3",
+        "f3e2"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "skewer-missed-rook",
+    "description": "Rf5+ skewers king and queen; h3 misses it",
+    "expected": [
+      "skewer"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "8/8/8/q2k4/8/8/6PP/5RK1 w - - 0 1",
+      "movePlayedUci": "h2h3",
+      "bestMoveUci": "f1f5",
+      "evalBefore": {
+        "cp": 761,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": 0,
+        "mate": null
+      },
+      "winProbBefore": 94.3,
+      "winProbAfter": 50,
+      "bestLine": [
+        "f1f5",
+        "d5d4",
+        "f5a5",
+        "d4e3",
+        "h2h4",
+        "e3f4",
+        "g1h2",
+        "f4g4",
+        "g2g3",
+        "g4f3",
+        "h2h3",
+        "f3e2"
+      ],
+      "refutationLine": [
+        "d5d4",
+        "f1f3",
+        "a5e1",
+        "g1h2",
+        "e1e2",
+        "f3f5",
+        "e2e4",
+        "f5f1",
+        "e4e5",
+        "h2h1",
+        "e5g3",
+        "f1f7"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "discovered-allowed",
+    "description": "...Ke8?? steps onto the e-file; the e4 knight moves with discovered check and wins the queen",
+    "expected": [
+      "discoveredAttack"
+    ],
+    "alsoOk": [
+      "fork",
+      "kingSafetyBlunder"
+    ],
+    "ctx": {
+      "fen": "r4k2/pppq1ppp/8/8/4N3/8/PPP2PPP/4R1K1 b - - 0 1",
+      "movePlayedUci": "f8e8",
+      "bestMoveUci": "a8e8",
+      "evalBefore": {
+        "cp": 587,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -6,
+        "mate": null
+      },
+      "winProbBefore": 89.7,
+      "winProbAfter": 49.4,
+      "bestLine": [
+        "a8e8",
+        "b2b3",
+        "e8e4",
+        "e1f1",
+        "e4e8",
+        "h2h3",
+        "d7d8",
+        "c2c4",
+        "d8e7",
+        "a2a3"
+      ],
+      "refutationLine": [
+        "e4f6",
+        "e8d8",
+        "f6d7",
+        "d8d7",
+        "e1d1",
+        "d7e6",
+        "d1d3",
+        "a7a5",
+        "d3e3",
+        "e6d7",
+        "g1f1",
+        "b7b5"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "discovered-missed",
+    "description": "The e4 knight can move with discovered check and win the queen; a3 misses it",
+    "expected": [
+      "discoveredAttack"
+    ],
+    "alsoOk": [
+      "fork"
+    ],
+    "ctx": {
+      "fen": "r3k3/pppq1ppp/8/8/4N3/8/PPP2PPP/4R1K1 w - - 0 1",
+      "movePlayedUci": "a2a3",
+      "bestMoveUci": "e4f6",
+      "evalBefore": {
+        "cp": 0,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -548,
+        "mate": null
+      },
+      "winProbBefore": 50,
+      "winProbAfter": 11.7,
+      "bestLine": [
+        "e4f6",
+        "e8d8",
+        "f6d7",
+        "d8d7",
+        "g1f1",
+        "a7a5",
+        "e1d1",
+        "d7e7",
+        "d1e1"
+      ],
+      "refutationLine": [
+        "e8f8",
+        "e4c5",
+        "d7d2",
+        "e1f1",
+        "d2c2",
+        "b2b4",
+        "a8d8",
+        "f1e1",
+        "c2c3",
+        "e1f1",
+        "d8e8",
+        "c5d7"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "backrank-allowed",
+    "description": "...Rd2?? leaves the back rank: Re8#",
+    "expected": [
+      "allowedMate",
+      "backRankWeakness"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "3r2k1/5ppp/8/8/8/8/5PPP/4R1K1 b - - 0 1",
+      "movePlayedUci": "d8d2",
+      "bestMoveUci": "h7h6",
+      "evalBefore": {
+        "cp": 0,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": null,
+        "mate": -1
+      },
+      "winProbBefore": 50,
+      "winProbAfter": 0,
+      "bestLine": [
+        "h7h6",
+        "e1a1",
+        "g8f8",
+        "f2f3",
+        "f7f6",
+        "g1f1",
+        "f8f7",
+        "f1f2",
+        "f7g8",
+        "f2g1",
+        "g8f8"
+      ],
+      "refutationLine": [
+        "e1e8"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "backrank-missed",
+    "description": "Rd8# is on the board; h3 misses it",
+    "expected": [
+      "missedMate",
+      "backRankWeakness"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "6k1/5ppp/8/8/8/8/r4PPP/3R2K1 w - - 0 1",
+      "movePlayedUci": "h2h3",
+      "bestMoveUci": "d1d8",
+      "evalBefore": {
+        "cp": null,
+        "mate": 1
+      },
+      "evalAfter": {
+        "cp": -24,
+        "mate": null
+      },
+      "winProbBefore": 100,
+      "winProbAfter": 47.8,
+      "bestLine": [
+        "d1d8"
+      ],
+      "refutationLine": [
+        "g7g6",
+        "d1d8",
+        "g8g7",
+        "d8d7",
+        "a2b2",
+        "d7a7",
+        "b2b1",
+        "g1h2",
+        "b1b8",
+        "a7c7",
+        "g7f8",
+        "c7a7"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "scholar-missed",
+    "description": "Qxf7# is available; d3 misses it",
+    "expected": [
+      "missedMate"
+    ],
+    "alsoOk": [
+      "hangingPiece"
+    ],
+    "ctx": {
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+      "movePlayedUci": "d2d3",
+      "bestMoveUci": "h5f7",
+      "evalBefore": {
+        "cp": null,
+        "mate": 1
+      },
+      "evalAfter": {
+        "cp": -646,
+        "mate": null
+      },
+      "winProbBefore": 100,
+      "winProbAfter": 8.5,
+      "bestLine": [
+        "h5f7"
+      ],
+      "refutationLine": [
+        "f6h5",
+        "g1f3",
+        "h7h6",
+        "b1c3",
+        "d7d6",
+        "c4b5",
+        "c8d7",
+        "b5c6",
+        "d7c6",
+        "a2a4",
+        "g7g5",
+        "h2h3"
+      ],
+      "moveNumber": 4,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "scholar-allowed",
+    "description": "Scholar's mate: 3...Nf6?? allows Qxf7#",
+    "expected": [
+      "allowedMate"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3",
+      "movePlayedUci": "g8f6",
+      "bestMoveUci": "g7g6",
+      "evalBefore": {
+        "cp": 16,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": null,
+        "mate": -1
+      },
+      "winProbBefore": 51.5,
+      "winProbAfter": 0,
+      "bestLine": [
+        "g7g6",
+        "h5f3",
+        "g8f6",
+        "g1e2",
+        "f8g7",
+        "d2d3",
+        "e8g8",
+        "a2a3",
+        "d7d6",
+        "c4a2",
+        "c8e6",
+        "a2e6"
+      ],
+      "refutationLine": [
+        "h5f7"
+      ],
+      "moveNumber": 3,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "fools-mate",
+    "description": "Fool's mate: 2.g4?? allows Qh4#",
+    "expected": [
+      "allowedMate"
+    ],
+    "alsoOk": [
+      "kingSafetyBlunder"
+    ],
+    "ctx": {
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/8/5P2/PPPPP1PP/RNBQKBNR w KQkq - 0 2",
+      "movePlayedUci": "g2g4",
+      "bestMoveUci": "e2e3",
+      "evalBefore": {
+        "cp": -62,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": null,
+        "mate": -1
+      },
+      "winProbBefore": 44.3,
+      "winProbAfter": 0,
+      "bestLine": [
+        "e2e3",
+        "b8c6",
+        "b1c3",
+        "a7a6",
+        "c3d5",
+        "b7b5",
+        "c2c4",
+        "g8f6",
+        "d5f6",
+        "d8f6"
+      ],
+      "refutationLine": [
+        "d8h4"
+      ],
+      "moveNumber": 2,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "trapped-bishop-a7",
+    "description": "Bxa7?? b6 traps the bishop",
+    "expected": [
+      "trappedPiece"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "2k5/ppp2ppp/5n2/8/8/4B3/PP3PPP/4K3 w - - 0 1",
+      "movePlayedUci": "e3a7",
+      "bestMoveUci": "e1e2",
+      "evalBefore": {
+        "cp": -184,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -349,
+        "mate": null
+      },
+      "winProbBefore": 33.7,
+      "winProbAfter": 21.7,
+      "bestLine": [
+        "e1e2",
+        "c8d7",
+        "e2d3",
+        "a7a6",
+        "e3d2",
+        "c7c5",
+        "b2b4",
+        "c5b4",
+        "d2b4",
+        "f6g4",
+        "f2f3",
+        "g4h2"
+      ],
+      "refutationLine": [
+        "b7b6",
+        "e1e2",
+        "c8b7",
+        "a7b6",
+        "b7b6",
+        "e2d3",
+        "b6c5",
+        "f2f3",
+        "f6d7",
+        "a2a3",
+        "d7b6",
+        "b2b3"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "trapped-bishop-a2",
+    "description": "...Bxa2?? b3 traps the bishop",
+    "expected": [
+      "trappedPiece"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "4k3/pp3ppp/4b3/8/8/5N2/PPP2PPP/2K5 b - - 0 1",
+      "movePlayedUci": "e6a2",
+      "bestMoveUci": "e8e7",
+      "evalBefore": {
+        "cp": -207,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -341,
+        "mate": null
+      },
+      "winProbBefore": 31.8,
+      "winProbAfter": 22.2,
+      "bestLine": [
+        "e8e7",
+        "b2b3",
+        "e7d6",
+        "c2c4",
+        "e6d7",
+        "c1d2",
+        "d7c6",
+        "f3e1",
+        "b7b5",
+        "d2c3",
+        "b5c4",
+        "c3c4"
+      ],
+      "refutationLine": [
+        "b2b3",
+        "a2b3",
+        "c2b3",
+        "e8d7",
+        "c1b2",
+        "d7d6",
+        "b2c3",
+        "d6d5",
+        "f3g5",
+        "f7f6",
+        "g5h3",
+        "a7a5"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "overloaded-bishop",
+    "description": "...b5?? leaves the d6 bishop guarding both knights alone",
+    "expected": [
+      "overloadedDefender"
+    ],
+    "alsoOk": [
+      "discoveredAttack"
+    ],
+    "ctx": {
+      "fen": "6k1/p4ppp/1p1b4/2n1n3/1B3B2/8/P4PPP/6K1 b - - 0 1",
+      "movePlayedUci": "b6b5",
+      "bestMoveUci": "e5f3",
+      "evalBefore": {
+        "cp": 589,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": 238,
+        "mate": null
+      },
+      "winProbBefore": 89.7,
+      "winProbAfter": 70.6,
+      "bestLine": [
+        "e5f3",
+        "g2f3",
+        "d6f4",
+        "g1f1",
+        "h7h5",
+        "b4c3",
+        "f7f6",
+        "c3e5",
+        "f6e5",
+        "a2a4"
+      ],
+      "refutationLine": [
+        "f4e5",
+        "d6e5",
+        "b4c5",
+        "a7a5",
+        "h2h3",
+        "f7f5",
+        "g1f1",
+        "g8f7",
+        "f1e2",
+        "f7e6",
+        "e2d3",
+        "e6d5"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "missed-promo-white",
+    "description": "b8=Q+ is there; h3 lets the rook stop the pawn",
+    "expected": [
+      "missedPromotion"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "6k1/1P6/8/8/8/8/r4PPP/6K1 w - - 0 1",
+      "movePlayedUci": "h2h3",
+      "bestMoveUci": "b7b8q",
+      "evalBefore": {
+        "cp": 900,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -278,
+        "mate": null
+      },
+      "winProbBefore": 96.5,
+      "winProbAfter": 26.4,
+      "bestLine": [
+        "b7b8q",
+        "g8g7",
+        "b8e5",
+        "g7h7",
+        "e5e7",
+        "h7h6",
+        "e7f6",
+        "h6h7",
+        "f6f7",
+        "h7h8",
+        "f7a2",
+        "h8h7"
+      ],
+      "refutationLine": [
+        "a2b2",
+        "f2f4",
+        "g8f7",
+        "b7b8r",
+        "b2b8",
+        "g1f2",
+        "f7f6",
+        "f2f3",
+        "b8b3",
+        "f3g4",
+        "b3b1",
+        "g4f3"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "missed-promo-black",
+    "description": "...b1=Q+ is there; ...g6 lets the rook stop the pawn",
+    "expected": [
+      "missedPromotion"
+    ],
+    "alsoOk": [
+      "fork"
+    ],
+    "ctx": {
+      "fen": "6k1/5pp1/7p/8/4R3/7P/1p3PP1/6K1 b - - 0 1",
+      "movePlayedUci": "g7g6",
+      "bestMoveUci": "b2b1q",
+      "evalBefore": {
+        "cp": 760,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -687,
+        "mate": null
+      },
+      "winProbBefore": 94.3,
+      "winProbAfter": 7.4,
+      "bestLine": [
+        "b2b1q",
+        "g1h2",
+        "b1e4",
+        "g2g3",
+        "g8h7",
+        "h3h4",
+        "e4c4",
+        "h2g1",
+        "c4e2",
+        "h4h5",
+        "e2e1",
+        "g1g2"
+      ],
+      "refutationLine": [
+        "e4b4",
+        "g6g5",
+        "b4b2",
+        "g5g4",
+        "g1h2",
+        "g8h7",
+        "h3h4",
+        "g4g3",
+        "h2g3",
+        "h7h8",
+        "g3g4"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "king-safety-f6",
+    "description": "2...f6? weakens the light squares around the king; Bc4 aims at the hole on f7",
+    "expected": [
+      "kingSafetyBlunder"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+      "movePlayedUci": "f7f6",
+      "bestMoveUci": "b8c6",
+      "evalBefore": {
+        "cp": -35,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -146,
+        "mate": null
+      },
+      "winProbBefore": 46.8,
+      "winProbAfter": 36.9,
+      "bestLine": [
+        "b8c6",
+        "d2d4",
+        "e5d4",
+        "f3d4",
+        "g8f6",
+        "d4c6",
+        "d7c6",
+        "d1d8",
+        "e8d8",
+        "f2f3",
+        "c8e6",
+        "c1e3"
+      ],
+      "refutationLine": [
+        "f1c4",
+        "b8c6",
+        "d2d4",
+        "d7d6",
+        "h2h3",
+        "e5d4",
+        "f3d4",
+        "c6d4",
+        "d1d4",
+        "c8d7",
+        "b1c3",
+        "g8e7"
+      ],
+      "moveNumber": 2,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "neg-a5",
+    "description": "1...a5: just a slow move",
+    "expected": [
+      "positionalLoss"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+      "movePlayedUci": "a7a5",
+      "bestMoveUci": "c7c5",
+      "evalBefore": {
+        "cp": -45,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -87,
+        "mate": null
+      },
+      "winProbBefore": 45.9,
+      "winProbAfter": 42.1,
+      "bestLine": [
+        "c7c5",
+        "g1f3",
+        "b8c6",
+        "f1b5",
+        "e7e6",
+        "e1g1",
+        "g8e7",
+        "d2d4",
+        "c5d4",
+        "f3d4",
+        "e7g6",
+        "c1e3"
+      ],
+      "refutationLine": [
+        "d2d4",
+        "e7e6",
+        "b1c3",
+        "d7d5",
+        "f1d3",
+        "d5e4",
+        "c3e4",
+        "b8d7",
+        "g1f3",
+        "f8e7",
+        "e1g1",
+        "g8f6"
+      ],
+      "moveNumber": 1,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "neg-ruy-bc4",
+    "description": "Ruy Lopez: 4.Bc4 wastes time, no tactic",
+    "expected": [
+      "positionalLoss"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+      "movePlayedUci": "b5c4",
+      "bestMoveUci": "b5a4",
+      "evalBefore": {
+        "cp": 37,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -6,
+        "mate": null
+      },
+      "winProbBefore": 53.4,
+      "winProbAfter": 49.4,
+      "bestLine": [
+        "b5a4",
+        "g8f6",
+        "e1g1",
+        "f8e7",
+        "f1e1",
+        "b7b5",
+        "a4b3",
+        "e8g8",
+        "d2d4",
+        "d7d6",
+        "c2c3",
+        "c8g4"
+      ],
+      "refutationLine": [
+        "g8f6",
+        "d2d3",
+        "f8c5",
+        "b1c3",
+        "d7d6",
+        "c3d5",
+        "h7h6",
+        "c1e3",
+        "f6d5",
+        "c4d5",
+        "c5e3",
+        "f2e3"
+      ],
+      "moveNumber": 4,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "neg-qgd-a5",
+    "description": "QGD: a quiet, slightly odd pawn move",
+    "expected": [
+      "positionalLoss"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "rnbq1rk1/ppp1bppp/4pn2/3p2B1/2PP4/2N1PN2/PP3PPP/R2QKB1R b KQ - 2 6",
+      "movePlayedUci": "a7a5",
+      "bestMoveUci": "h7h6",
+      "evalBefore": {
+        "cp": -26,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -47,
+        "mate": null
+      },
+      "winProbBefore": 47.6,
+      "winProbAfter": 45.7,
+      "bestLine": [
+        "h7h6",
+        "g5h4",
+        "f6e4",
+        "h4e7",
+        "d8e7",
+        "a1c1",
+        "f8d8",
+        "d1b3",
+        "e4f6",
+        "f1e2",
+        "d5c4",
+        "b3c4"
+      ],
+      "refutationLine": [
+        "f1d3",
+        "c7c5",
+        "c4d5",
+        "f6d5",
+        "g5e7",
+        "d8e7",
+        "c3d5",
+        "e6d5",
+        "d4c5",
+        "b8c6",
+        "e1g1",
+        "e7c5"
+      ],
+      "moveNumber": 6,
+      "myColor": "b"
+    }
+  },
+  {
+    "id": "neg-early-queen",
+    "description": "2.Qh5: an early queen sortie, no tactic",
+    "expected": [
+      "positionalLoss"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+      "movePlayedUci": "d1h5",
+      "bestMoveUci": "g1f3",
+      "evalBefore": {
+        "cp": 34,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -28,
+        "mate": null
+      },
+      "winProbBefore": 53.1,
+      "winProbAfter": 47.4,
+      "bestLine": [
+        "g1f3",
+        "b8c6",
+        "d2d4",
+        "e5d4",
+        "f3d4",
+        "g8f6",
+        "d4c6",
+        "d7c6",
+        "d1d8",
+        "e8d8",
+        "b1c3",
+        "f8d6"
+      ],
+      "refutationLine": [
+        "d7d6",
+        "f1c4",
+        "g7g6",
+        "h5f3",
+        "g8f6",
+        "b1c3",
+        "f8g7",
+        "d2d3",
+        "c7c6",
+        "c4b3",
+        "e8g8",
+        "h2h3"
+      ],
+      "moveNumber": 2,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "hang-bishop-f7",
+    "description": "Italian: Bxf7+?? gives the bishop for a pawn after ...Rxf7",
+    "expected": [
+      "hangingPiece"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQ1RK1 w - - 2 7",
+      "movePlayedUci": "c4f7",
+      "bestMoveUci": "h2h3",
+      "evalBefore": {
+        "cp": 25,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -339,
+        "mate": null
+      },
+      "winProbBefore": 52.3,
+      "winProbAfter": 22.3,
+      "bestLine": [
+        "h2h3",
+        "a7a5",
+        "f1e1",
+        "h7h6",
+        "a2a4",
+        "c8e6",
+        "b1d2",
+        "c5a7",
+        "b2b3",
+        "f6h5",
+        "a1a2",
+        "e6c4"
+      ],
+      "refutationLine": [
+        "f8f7",
+        "b2b4",
+        "c5b6",
+        "a2a4",
+        "a7a6",
+        "f3g5",
+        "f7e7",
+        "c1e3",
+        "h7h6",
+        "e3b6",
+        "c7b6",
+        "g5f3"
+      ],
+      "moveNumber": 7,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "hang-pawn-a4",
+    "description": "Rook endgame: h4? ignores the attack on the a4 pawn, ...Rxa4",
+    "expected": [
+      "hangingPiece"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "8/5pk1/6p1/8/P7/6P1/r4PKP/1R6 w - - 0 1",
+      "movePlayedUci": "h2h4",
+      "bestMoveUci": "b1b4",
+      "evalBefore": {
+        "cp": 230,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": 0,
+        "mate": null
+      },
+      "winProbBefore": 70,
+      "winProbAfter": 50,
+      "bestLine": [
+        "b1b4",
+        "a2a3",
+        "h2h3",
+        "g7f8",
+        "b4b8",
+        "f8g7",
+        "b8a8",
+        "g6g5",
+        "a4a5",
+        "f7f6",
+        "a8a6",
+        "a3a4"
+      ],
+      "refutationLine": [
+        "a2a4",
+        "f2f3",
+        "a4a2",
+        "g2g1",
+        "f7f6",
+        "b1b7",
+        "g7g8",
+        "b7b6",
+        "a2a1",
+        "g1f2",
+        "a1a2",
+        "f2g1"
+      ],
+      "moveNumber": 1,
+      "myColor": "w"
+    }
+  },
+  {
+    "id": "neg-london-h3",
+    "description": "London: a slow h3, no tactic",
+    "expected": [
+      "positionalLoss"
+    ],
+    "alsoOk": [],
+    "ctx": {
+      "fen": "rnbqkb1r/ppp2ppp/4pn2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR w KQkq - 0 4",
+      "movePlayedUci": "h2h3",
+      "bestMoveUci": "c2c4",
+      "evalBefore": {
+        "cp": 18,
+        "mate": null
+      },
+      "evalAfter": {
+        "cp": -1,
+        "mate": null
+      },
+      "winProbBefore": 51.7,
+      "winProbAfter": 49.9,
+      "bestLine": [
+        "c2c4",
+        "c7c5",
+        "g1f3",
+        "c5d4",
+        "e3d4",
+        "d5c4",
+        "f1c4",
+        "f8d6",
+        "f3e5",
+        "f6d5",
+        "f4g3",
+        "e8g8"
+      ],
+      "refutationLine": [
+        "f8d6",
+        "g1f3",
+        "d6f4",
+        "e3f4",
+        "d8d6",
+        "f3e5",
+        "c7c5",
+        "b1c3",
+        "e8g8",
+        "d4c5",
+        "d6c5",
+        "d1d2"
+      ],
+      "moveNumber": 4,
+      "myColor": "w"
+    }
+  }
+]
