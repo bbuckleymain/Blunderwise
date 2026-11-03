@@ -65,6 +65,7 @@ void app.whenReady().then(() => {
   ipcMain.handle(IPC.prefetch, (_e, fen: string) => coach.prefetch(fen));
   ipcMain.handle(IPC.checkMove, (_e, req: MoveCheckRequest) => coach.checkMove(req));
   ipcMain.handle(IPC.narrate, (_e, ctx: MistakeContext) => coach.narrate(ctx));
+  ipcMain.handle(IPC.cached, (_e, ctx: MistakeContext) => coach.cached(ctx));
   ipcMain.handle(IPC.hint, async (_e, fen: string) => (await coach.analyzeFen(fen)).bestMove);
   ipcMain.handle(IPC.gamesSave, (_e, req: SaveGameRequest) => {
     const id = store.saveGame(req);

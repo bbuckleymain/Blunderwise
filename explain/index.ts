@@ -28,6 +28,11 @@ export interface ExplainOptions {
   readonly cache?: KeyValueStore | null;
 }
 
+/** The cached LLM explanation for this mistake, if the coach already wrote one. Never calls the LLM. */
+export async function cachedExplanation(ctx: MistakeContext, store: KeyValueStore): Promise<Explanation | null> {
+  return new ExplanationCache(store).get(cacheKey(ctx.fen, ctx.movePlayedUci, PROMPT_VERSION));
+}
+
 /** Instant, offline explanation: facts + tags + template. Use while waiting for the LLM. */
 export function explainInstantly(ctx: MistakeContext): ExplainResult {
   const a = analyze(ctx);

@@ -1,5 +1,5 @@
 /** The typed bridge between renderer and main. Types only: safe to import from both sides. */
-import type { Color, ExplainResult, GamePhase, MistakeContext, MotifSide, MotifTag } from '../explain/types';
+import type { Color, ExplainResult, Explanation, GamePhase, MistakeContext, MotifSide, MotifTag } from '../explain/types';
 import type { MoveClass } from '../analysis/classify';
 
 export type OpponentKind = 'stockfish' | 'maia';
@@ -180,6 +180,8 @@ export interface CoachApi {
     narrate(ctx: MistakeContext): Promise<ExplainResult>;
     /** The engine's best move (UCI) in this position, for hints. */
     hint(fen: string): Promise<string | null>;
+    /** The coach's AI explanation for this mistake if one is already cached (never calls the AI). */
+    cached(ctx: MistakeContext): Promise<Explanation | null>;
   };
   games: {
     save(req: SaveGameRequest): Promise<number>;
@@ -220,6 +222,7 @@ export const IPC = {
   checkMove: 'coach:checkMove',
   narrate: 'coach:narrate',
   hint: 'coach:hint',
+  cached: 'coach:cached',
   gamesSave: 'games:save',
   gamesList: 'games:list',
   gamesGet: 'games:get',

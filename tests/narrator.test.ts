@@ -184,3 +184,14 @@ describe('OpenRouterClient', () => {
     expect(r.source).toBe('template');
   });
 });
+
+describe('cachedExplanation', () => {
+  it('returns the cached AI text without calling the LLM, or null', async () => {
+    const { cachedExplanation } = await import('../explain');
+    const ctx = fixture('hang-knight-d4').ctx;
+    const store = new MemoryStore();
+    expect(await cachedExplanation(ctx, store)).toBeNull();
+    await explainMistake(ctx, { llm: scripted(GOOD), cache: store });
+    expect((await cachedExplanation(ctx, store))?.headline).toBe('Your knight was left undefended');
+  });
+});

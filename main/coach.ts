@@ -3,11 +3,11 @@ import { classifyMove, isDecidedEitherWay } from '../analysis/classify';
 import { negateScore, type Score } from '../analysis/score';
 import { winProbability } from '../analysis/winProbability';
 import type { EngineEval } from '../engine/types';
-import { explainInstantly, explainMistake } from '../explain';
+import { cachedExplanation, explainInstantly, explainMistake } from '../explain';
 import { GeminiClient } from '../explain/narrator/gemini';
 import type { LlmClient } from '../explain/narrator/llm';
 import { OpenRouterClient } from '../explain/narrator/openrouter';
-import type { ExplainResult, MistakeContext } from '../explain/types';
+import type { ExplainResult, Explanation, MistakeContext } from '../explain/types';
 import type { MoveCheck, MoveCheckRequest, ReviewProgress, ReviewedMove } from '../shared/api';
 import type { Db } from './db';
 import type { EngineManager } from './engineManager';
@@ -117,6 +117,10 @@ export class CoachService {
     }
     const client = new GeminiClient({ apiKey: key, model: s.geminiModel, timeoutMs });
     return { client, label: `Gemini (${s.geminiModel})`, lastModel: () => null };
+  }
+
+  cached(ctx: MistakeContext): Promise<Explanation | null> {
+    return cachedExplanation(ctx, this.db.explanationStore());
   }
 
   narrate(ctx: MistakeContext): Promise<ExplainResult> {

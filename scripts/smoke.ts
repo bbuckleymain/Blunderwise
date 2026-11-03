@@ -10,7 +10,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { Board, see } from '../explain/board';
 
-interface Loc { getByRole(r: string, o: { name: string | RegExp }): Loc; count(): Promise<number>; isVisible(): Promise<boolean>; click(): Promise<void>; boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>; getAttribute(n: string): Promise<string | null>; waitFor(o?: { timeout?: number; state?: string }): Promise<void>; first(): Loc }
+interface Loc { hover(): Promise<void>; last(): Loc; getByRole(r: string, o: { name: string | RegExp }): Loc; count(): Promise<number>; isVisible(): Promise<boolean>; click(): Promise<void>; boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>; getAttribute(n: string): Promise<string | null>; waitFor(o?: { timeout?: number; state?: string }): Promise<void>; first(): Loc }
 interface Page { keyboard: { type(t: string): Promise<void>; press(k: string): Promise<void> }; evaluate<T>(fn: () => Promise<T>): Promise<T>; locator(s: string): Loc; getByText(t: string | RegExp, o?: { exact?: boolean }): Loc; getByRole(r: string, o: { name: string | RegExp; exact?: boolean }): Loc; mouse: { click(x: number, y: number): Promise<void> }; screenshot(o: { path: string }): Promise<void>; waitForTimeout(ms: number): Promise<void>; setViewportSize?(s: { width: number; height: number }): Promise<void> }
 interface ElectronApp { firstWindow(): Promise<Page>; close(): Promise<void> }
 interface PW { _electron: { launch(o: { executablePath: string; args: string[]; env: Record<string, string> }): Promise<ElectronApp> } }
@@ -158,6 +158,10 @@ async function main(): Promise<void> {
   await page.getByRole('button', { name: 'Play on' }).click();
   await waitMyTurn();
   console.log('play on OK');
+  await page.locator('.move-list .ml-move.explainable').last().hover();
+  await page.locator('.move-popover').waitFor({ timeout: 5000 });
+  await page.screenshot({ path: path.join(OUT, '3b-hover-explanation.png') });
+  console.log('hover explanation OK');
   await page.getByRole('button', { name: 'Resign' }).click();
   await page.getByRole('button', { name: 'Review game' }).click();
   await page.locator('.mistake-item').first().waitFor({ timeout: 60000 });

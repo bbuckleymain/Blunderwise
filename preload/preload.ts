@@ -17,6 +17,7 @@ const api: CoachApi = {
     checkMove: (req) => invoke(IPC.checkMove, req),
     narrate: (ctx) => invoke(IPC.narrate, ctx),
     hint: (fen) => invoke(IPC.hint, fen),
+    cached: (ctx) => invoke(IPC.cached, ctx),
   },
   games: {
     save: (req) => invoke(IPC.gamesSave, req),

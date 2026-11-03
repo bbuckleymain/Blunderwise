@@ -122,3 +122,11 @@ square.hint-square { background: radial-gradient(rgba(70, 150, 255, 0.55) 30%, r
 .nav-row button { padding: 4px 10px; }
 .viewing { color: var(--inaccuracy); font-size: 14px; margin-left: 6px; }
 .hint-text { align-self: center; font-size: 13px; }
+.ml-move.explainable { cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; }
+.move-popover { position: fixed; z-index: 50; background: var(--panel-2); border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); pointer-events: none; }
+.move-popover.blunder { border-color: var(--blunder); }
+.move-popover.mistake { border-color: var(--mistake); }
+.move-popover.inaccuracy { border-color: var(--inaccuracy); }
+.popover-headline { font-weight: 700; margin: 6px 0 4px; }
+.popover-text { font-size: 14px; }
+.popover-best { margin-top: 6px; font-size: 14px; color: var(--muted); }
