@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { MotifTag } from '../../explain/types';
-import type { GameRecord, LibraryProgress, ReportData } from '../../shared/api';
+import type { GameRecord, LibraryProgress, OpeningReportRow, ReportData } from '../../shared/api';
 import { api } from './api';
 import { MOTIF_LABEL, PHASE_LABEL } from './labels';
 
@@ -13,15 +13,17 @@ function Bar(props: { value: number; max: number; className?: string }): React.J
   );
 }
 
-export function ReportScreen(props: { onDrill: (tag: MotifTag) => void }): React.JSX.Element {
+export function ReportScreen(props: { onDrill: (tag: MotifTag) => void; onDrillOpening: (family: string) => void }): React.JSX.Element {
   const [report, setReport] = useState<ReportData | null>(null);
   const [games, setGames] = useState<GameRecord[] | null>(null);
   const [progress, setProgress] = useState<LibraryProgress | null>(null);
+  const [openings, setOpenings] = useState<OpeningReportRow[]>([]);
 
   const load = async (): Promise<void> => {
-    const [r, g] = await Promise.all([api().library.report(), api().games.list()]);
+    const [r, g, o] = await Promise.all([api().library.report(), api().games.list(), api().openings.report()]);
     setReport(r);
     setGames(g);
+    setOpenings(o);
   };
   useEffect(() => {
     void load();
@@ -115,6 +117,46 @@ export function ReportScreen(props: { onDrill: (tag: MotifTag) => void }): React
               </tbody>
             </table>
             <p className="muted small">A mistake can have up to two themes, so the counts can add up to more than the number of mistakes.</p>
+          </div>
+
+          <div className="panel">
+            <h2>Your openings</h2>
+            {openings.length === 0 ? (
+              <p className="muted">Play or import a few games and your openings show up here.</p>
+            ) : (
+              <table className="tag-table">
+                <thead>
+                  <tr className="muted small">
+                    <td>Opening</td>
+                    <td className="num">Games</td>
+                    <td>W / D / L</td>
+                    <td>Stay in theory</td>
+                    <td>Opening mistakes</td>
+                    <td />
+                  </tr>
+                </thead>
+                <tbody>
+                  {openings.slice(0, 12).map((o) => {
+                    const score = o.games ? Math.round((100 * (o.wins + o.draws / 2)) / o.games) : 0;
+                    return (
+                      <tr key={`${o.family}-${o.color}`}>
+                        <td className="tag-name">
+                          {o.family} <span className="pill">{o.color === 'w' ? 'White' : 'Black'}</span>
+                        </td>
+                        <td className="num">{o.games}</td>
+                        <td>
+                          {o.wins} / {o.draws} / {o.losses} <span className="muted small">({score}%)</span>
+                        </td>
+                        <td>{o.avgBookPlies ? `${Math.max(1, Math.round(o.avgBookPlies / 2))} move${Math.round(o.avgBookPlies / 2) <= 1 ? '' : 's'}` : '-'}</td>
+                        <td>{o.analysedGames ? `${o.openingMistakes} in ${o.analysedGames} analysed` : <span className="muted">not analysed</span>}</td>
+                        <td>{o.drills > 0 && <button onClick={() => props.onDrillOpening(o.family)}>Drill ({o.drills})</button>}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            <p className="muted small">"Stay in theory" is how many moves your games follow known opening lines before leaving the book. Rows are sorted by games played.</p>
           </div>
 
           <div className="panel">

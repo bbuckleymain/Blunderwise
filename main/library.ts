@@ -64,6 +64,8 @@ export class Library {
             classification: c.classification,
             tags: tags.map((t) => t.tag),
             gameId: id,
+            opening: g.openingFamily,
+            phase: c.instant?.facts.phase ?? gamePhase(m.fenBefore, c.ctx.moveNumber),
           },
           newCard(Date.now()),
         );

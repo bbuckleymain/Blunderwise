@@ -22,6 +22,7 @@ function stubCoach(): CoachService {
     bestMoveUci: f.ctx.bestMoveUci,
     bestMoveSan: 'd3',
     stop: false,
+    book: false,
     ctx: uci === f.ctx.movePlayedUci && fenBefore === f.ctx.fen ? f.ctx : null,
     instant: uci === f.ctx.movePlayedUci && fenBefore === f.ctx.fen ? explainInstantly(f.ctx) : null,
   });
@@ -61,9 +62,9 @@ describe('library: analysis -> report -> drills', () => {
 
   it('turns the blunder into a drill that is due now, filterable by motif', () => {
     const now = Date.now();
-    expect(db.dueDrills(now, null, 10)).toHaveLength(1);
-    expect(db.dueDrills(now, 'hangingPiece', 10)).toHaveLength(1);
-    expect(db.dueDrills(now, 'fork', 10)).toHaveLength(0);
+    expect(db.dueDrills(now, {}, 10)).toHaveLength(1);
+    expect(db.dueDrills(now, { tag: 'hangingPiece' }, 10)).toHaveLength(1);
+    expect(db.dueDrills(now, { tag: 'fork' }, 10)).toHaveLength(0);
     expect(db.drillCounts(now)).toMatchObject({ total: 1, due: 1 });
   });
 
@@ -74,7 +75,7 @@ describe('library: analysis -> report -> drills', () => {
   });
 
   it('a wrong answer brings the drill back in 10 minutes, a right one pushes it to tomorrow', async () => {
-    const d = db.dueDrills(Date.now(), null, 1)[0];
+    const d = db.dueDrills(Date.now(), {}, 1)[0];
     if (!d) throw new Error('no drill');
     const wrong = await lib.answerDrill(d.id, 'e1g1');
     expect(wrong.correct).toBe(false);

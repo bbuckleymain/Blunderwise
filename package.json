@@ -11,7 +11,9 @@
     "dev": "node scripts/dev.mjs",
     "dist": "npm run build && node scripts/fetch-stockfish.mjs && electron-builder --linux flatpak",
     "eval:puzzles": "tsx scripts/eval-puzzles.ts",
-    "fetch:stockfish": "node scripts/fetch-stockfish.mjs"
+    "fetch:stockfish": "node scripts/fetch-stockfish.mjs",
+    "generate:openings": "tsx scripts/generate-openings.ts",
+    "verify:endgames": "tsx scripts/verify-endgames.ts"
   },
   "dependencies": {},
   "devDependencies": {
@@ -57,7 +59,9 @@
       "category": "Game",
       "executableName": "blunderwise",
       "synopsis": "Play a bot and get your blunders explained",
-      "maintainer": "falconunicorn17@gmail.com"
+      "maintainer": "falconunicorn17@gmail.com",
+      "icon": "build/icon.png",
+      "syncDesktopName": true
     },
     "publish": null,
     "extraResources": [
@@ -87,5 +91,6 @@
       ]
     }
   },
-  "homepage": "https://github.com/YOUR_GITHUB_USER/blunderwise"
+  "homepage": "https://github.com/YOUR_GITHUB_USER/blunderwise",
+  "desktopName": "app.blunderwise.Blunderwise.desktop"
 }

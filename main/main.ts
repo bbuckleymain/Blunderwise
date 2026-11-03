@@ -1,8 +1,8 @@
 import { BrowserWindow, app, ipcMain, shell } from 'electron';
 import path from 'node:path';
-import { IPC, type BotMoveRequest, type LlmProvider, type MoveCheckRequest, type SaveGameRequest, type Settings } from '../shared/api';
-import type { MotifTag } from '../explain/types';
+import { IPC, type BotMoveRequest, type DrillFilter, type LlmProvider, type MoveCheckRequest, type SaveGameRequest, type Settings } from '../shared/api';
 import { Library } from './library';
+import { families as bookFamilies, pickBookMove, trackOpening } from '../openings/book';
 import type { Color, MistakeContext } from '../explain/types';
 import { CoachService } from './coach';
 import { Db } from './db';
@@ -28,6 +28,7 @@ function createWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      autoplayPolicy: 'no-user-gesture-required',
     },
   });
   win.setMenuBarVisibility(false);
@@ -56,6 +57,11 @@ void app.whenReady().then(() => {
     return eng.status();
   });
   ipcMain.handle(IPC.botMove, async (_e, req: BotMoveRequest) => {
+    // Stockfish plays random book moves in the opening so games differ (and can steer into a chosen opening).
+    if (req.opponent === 'stockfish' && req.useBook && Number(req.fen.split(' ')[5] ?? '1') <= 10) {
+      const book = pickBookMove(req.fen, req.bookFamily);
+      if (book) return book;
+    }
     const r =
       req.opponent === 'maia'
         ? await eng.maiaEngine(req.maiaRating).getBestMove(req.fen, { nodes: 1 })
@@ -65,6 +71,10 @@ void app.whenReady().then(() => {
   ipcMain.handle(IPC.prefetch, (_e, fen: string) => coach.prefetch(fen));
   ipcMain.handle(IPC.checkMove, (_e, req: MoveCheckRequest) => coach.checkMove(req));
   ipcMain.handle(IPC.narrate, (_e, ctx: MistakeContext) => coach.narrate(ctx));
+  ipcMain.handle(IPC.threat, (_e, fen: string) => coach.threat(fen));
+  ipcMain.handle(IPC.openingTrack, (_e, fens: string[]) => trackOpening(fens));
+  ipcMain.handle(IPC.openingFamilies, () => [...bookFamilies()]);
+  ipcMain.handle(IPC.openingReport, () => store.openingReport());
   ipcMain.handle(IPC.cached, (_e, ctx: MistakeContext) => coach.cached(ctx));
   ipcMain.handle(IPC.hint, async (_e, fen: string) => (await coach.analyzeFen(fen)).bestMove);
   ipcMain.handle(IPC.gamesSave, (_e, req: SaveGameRequest) => {
@@ -83,7 +93,7 @@ void app.whenReady().then(() => {
   ipcMain.handle(IPC.analyzeAll, (e) => library.analyzeAll((p) => e.sender.send(IPC.libraryProgress, p)));
   ipcMain.handle(IPC.analyzeGame, (_e, id: number) => library.analyzeGame(id));
   ipcMain.handle(IPC.report, () => store.report());
-  ipcMain.handle(IPC.drillsDue, (_e, tag: MotifTag | null, limit: number) => store.dueDrills(Date.now(), tag, limit));
+  ipcMain.handle(IPC.drillsDue, (_e, filter: DrillFilter, limit: number) => store.dueDrills(Date.now(), filter, limit));
   ipcMain.handle(IPC.drillsCounts, () => store.drillCounts(Date.now()));
   ipcMain.handle(IPC.drillsAnswer, (_e, id: number, uci: string) => library.answerDrill(id, uci));
   ipcMain.handle(IPC.gamesList, () => store.listGames());

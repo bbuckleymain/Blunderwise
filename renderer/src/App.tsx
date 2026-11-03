@@ -1,23 +1,37 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { EndgamePosition } from '../../endgames/positions';
 import type { MotifTag } from '../../explain/types';
+import { api } from './api';
+import { applyAppearance } from './appearance';
 import { DrillScreen } from './DrillScreen';
+import { EndgameScreen } from './EndgameScreen';
 import { GamesScreen } from './GamesScreen';
-import { PlayScreen } from './PlayScreen';
+import { PlayScreen, type EndgameLaunch } from './PlayScreen';
 import { ReportScreen } from './ReportScreen';
 import { ReviewScreen } from './ReviewScreen';
 import { SettingsScreen } from './SettingsScreen';
 
-type Tab = 'play' | 'drills' | 'games' | 'report' | 'settings';
+type Tab = 'play' | 'drills' | 'endgames' | 'games' | 'report' | 'settings';
 type Route = { name: Tab } | { name: 'review'; gameId: number };
 
 export function App(): React.JSX.Element {
   const [route, setRoute] = useState<Route>({ name: 'play' });
   const [drillTag, setDrillTag] = useState<MotifTag | null>(null);
+  const [drillOpening, setDrillOpening] = useState<string | null>(null);
+  const [launch, setLaunch] = useState<EndgameLaunch | null>(null);
+
+  useEffect(() => {
+    void api().settings.get().then(applyAppearance);
+  }, []);
+
   const tab = (name: Tab, label: string): React.JSX.Element => (
     <button
       className={route.name === name ? 'tab active' : 'tab'}
       onClick={() => {
-        if (name === 'drills') setDrillTag(null);
+        if (name === 'drills') {
+          setDrillTag(null);
+          setDrillOpening(null);
+        }
         setRoute({ name });
       }}
     >
@@ -31,6 +45,7 @@ export function App(): React.JSX.Element {
         <span className="logo">♞ Blunderwise</span>
         {tab('play', 'Play')}
         {tab('drills', 'Drills')}
+        {tab('endgames', 'Endgames')}
         {tab('games', 'Games')}
         {tab('report', 'Report')}
         {tab('settings', 'Settings')}
@@ -38,14 +53,37 @@ export function App(): React.JSX.Element {
       <main className="content">
         {/* Keep the game alive while visiting other tabs */}
         <div style={{ display: route.name === 'play' ? 'contents' : 'none' }}>
-          <PlayScreen onReview={review} />
+          <PlayScreen onReview={review} launch={launch} />
         </div>
-        {route.name === 'drills' && <DrillScreen tag={drillTag} onClearTag={() => setDrillTag(null)} />}
+        {route.name === 'drills' && (
+          <DrillScreen
+            tag={drillTag}
+            opening={drillOpening}
+            onClearTag={() => {
+              setDrillTag(null);
+              setDrillOpening(null);
+            }}
+          />
+        )}
+        {route.name === 'endgames' && (
+          <EndgameScreen
+            onStart={(e) => {
+              setLaunch({ nonce: Date.now(), endgame: e });
+              setRoute({ name: 'play' });
+            }}
+          />
+        )}
         {route.name === 'games' && <GamesScreen onReview={review} />}
         {route.name === 'report' && (
           <ReportScreen
             onDrill={(tag) => {
               setDrillTag(tag);
+              setDrillOpening(null);
+              setRoute({ name: 'drills' });
+            }}
+            onDrillOpening={(family) => {
+              setDrillOpening(family);
+              setDrillTag(null);
               setRoute({ name: 'drills' });
             }}
           />

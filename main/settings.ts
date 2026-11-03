@@ -16,6 +16,9 @@ export const DEFAULT_SETTINGS: Settings = {
   maiaWeightsDir: '',
   lichessUsername: '',
   chesscomUsername: '',
+  openingVariety: true,
+  boardTheme: 'brown',
+  sounds: true,
 };
 
 const KEY_SETTING: Record<LlmProvider, string> = { gemini: 'geminiKey', openrouter: 'openrouterKey' };
@@ -39,6 +42,9 @@ export function sanitize(raw: Partial<Settings>, base: Settings): Settings {
     maiaWeightsDir: typeof raw.maiaWeightsDir === 'string' ? raw.maiaWeightsDir.trim() : base.maiaWeightsDir,
     lichessUsername: typeof raw.lichessUsername === 'string' ? raw.lichessUsername.trim() : base.lichessUsername,
     chesscomUsername: typeof raw.chesscomUsername === 'string' ? raw.chesscomUsername.trim() : base.chesscomUsername,
+    openingVariety: typeof raw.openingVariety === 'boolean' ? raw.openingVariety : base.openingVariety,
+    boardTheme: raw.boardTheme === 'green' || raw.boardTheme === 'blue' || raw.boardTheme === 'gray' || raw.boardTheme === 'brown' ? raw.boardTheme : base.boardTheme,
+    sounds: typeof raw.sounds === 'boolean' ? raw.sounds : base.sounds,
   };
 }
 

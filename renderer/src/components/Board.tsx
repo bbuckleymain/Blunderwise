@@ -56,9 +56,17 @@ export function Board(props: BoardProps): React.JSX.Element {
     drawable: { enabled: true, visible: true, autoShapes: props.shapes ?? [] },
   });
 
+  // Only touch chessground when something it shows actually changed. Re-applying the whole config on every
+  // React render (e.g. a ticking clock) would cancel half-made moves and erase arrows the user drew.
+  const boardKey = (): string =>
+    JSON.stringify([props.fen, props.orientation, props.turnColor, props.movableColor ?? null, props.lastMove ?? null, props.check ?? false, props.highlight ?? [], props.hintSquare ?? null]);
+  const shapesKey = (): string => JSON.stringify(props.shapes ?? []);
+  const applied = useRef({ board: '', shapes: '' });
+
   useEffect(() => {
     if (!el.current) return;
     cg.current = Chessground(el.current, config());
+    applied.current = { board: boardKey(), shapes: shapesKey() };
     return () => {
       cg.current?.destroy();
       cg.current = null;
@@ -67,10 +75,25 @@ export function Board(props: BoardProps): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    cg.current?.set(config());
-    // set() doesn't redraw the SVG layer, so push arrows explicitly (otherwise old arrows linger).
-    cg.current?.setAutoShapes(props.shapes ?? []);
+    const api = cg.current;
+    if (!api) return;
+    const bk = boardKey();
+    const sk = shapesKey();
+    if (bk !== applied.current.board) {
+      applied.current.board = bk;
+      api.set(config());
+      applied.current.shapes = '';
+    }
+    if (sk !== applied.current.shapes) {
+      applied.current.shapes = sk;
+      // set() doesn't redraw the SVG layer, so push arrows explicitly (otherwise old arrows linger).
+      api.setAutoShapes(props.shapes ?? []);
+    }
   });
 
-  return <div className="board" data-fen={props.fen} ref={el} />;
+  // chessground caches where the board is on screen. When the layout shifts (clocks appear above it, the window
+  // scrolls) that cache goes stale and clicks land on the wrong square, so refresh it before every press.
+  const refreshBounds = (): void => cg.current?.state.dom.bounds.clear();
+
+  return <div className="board" data-fen={props.fen} ref={el} onMouseDownCapture={refreshBounds} onTouchStartCapture={refreshBounds} />;
 }

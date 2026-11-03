@@ -10,8 +10,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { Board, see } from '../explain/board';
 
-interface Loc { hover(): Promise<void>; last(): Loc; getByRole(r: string, o: { name: string | RegExp }): Loc; count(): Promise<number>; isVisible(): Promise<boolean>; click(): Promise<void>; boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>; getAttribute(n: string): Promise<string | null>; waitFor(o?: { timeout?: number; state?: string }): Promise<void>; first(): Loc }
-interface Page { keyboard: { type(t: string): Promise<void>; press(k: string): Promise<void> }; evaluate<T>(fn: () => Promise<T>): Promise<T>; locator(s: string): Loc; getByText(t: string | RegExp, o?: { exact?: boolean }): Loc; getByRole(r: string, o: { name: string | RegExp; exact?: boolean }): Loc; mouse: { click(x: number, y: number): Promise<void> }; screenshot(o: { path: string }): Promise<void>; waitForTimeout(ms: number): Promise<void>; setViewportSize?(s: { width: number; height: number }): Promise<void> }
+interface Loc { textContent(): Promise<string | null>; selectOption(v: string): Promise<void>; hover(): Promise<void>; last(): Loc; getByRole(r: string, o: { name: string | RegExp }): Loc; count(): Promise<number>; isVisible(): Promise<boolean>; click(): Promise<void>; boundingBox(): Promise<{ x: number; y: number; width: number; height: number } | null>; getAttribute(n: string): Promise<string | null>; waitFor(o?: { timeout?: number; state?: string }): Promise<void>; first(): Loc }
+interface Page { on(ev: string, cb: (x: { text?(): string; message?: string }) => void): void; keyboard: { type(t: string): Promise<void>; press(k: string): Promise<void> }; evaluate<T>(fn: () => Promise<T>): Promise<T>; locator(s: string): Loc; getByText(t: string | RegExp, o?: { exact?: boolean }): Loc; getByRole(r: string, o: { name: string | RegExp; exact?: boolean }): Loc; mouse: { click(x: number, y: number): Promise<void>; move(x: number, y: number): Promise<void>; down(o?: { button?: string }): Promise<void>; up(o?: { button?: string }): Promise<void> }; screenshot(o: { path: string }): Promise<void>; waitForTimeout(ms: number): Promise<void>; setViewportSize?(s: { width: number; height: number }): Promise<void> }
 interface ElectronApp { firstWindow(): Promise<Page>; close(): Promise<void> }
 interface PW { _electron: { launch(o: { executablePath: string; args: string[]; env: Record<string, string> }): Promise<ElectronApp> } }
 
@@ -54,9 +54,14 @@ async function main(): Promise<void> {
     env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: '1' } as Record<string, string>,
   });
   const page = await app.firstWindow();
+  page.on('console', (m) => { const t = m.text?.() ?? ''; if (/error|warn/i.test(t)) console.log(`[page] ${t}`); });
+  page.on('pageerror', (e) => console.log(`[pageerror] ${e.message ?? ''}`));
   await page.getByRole('button', { name: 'Start game' }).waitFor({ timeout: 15000 });
   await page.screenshot({ path: path.join(OUT, '1-setup.png') });
+  await page.locator('label:has-text("Clock") select').selectOption('5+0');
   await page.getByRole('button', { name: 'Start game' }).click();
+  await page.locator('.clock').first().waitFor({ timeout: 5000 });
+  console.log('clock OK');
 
   const fenNow = async (): Promise<string> => (await page.locator('.board:visible').getAttribute('data-fen')) ?? '';
   const waitMyTurn = async (): Promise<void> => page.getByText('Your move', { exact: true }).waitFor({ timeout: 30000 });
@@ -64,6 +69,34 @@ async function main(): Promise<void> {
   await waitMyTurn();
   await move(page, 'e2e4');
   await waitMyTurn();
+
+  // Opening name and book status
+  await page.locator('.opening-line').waitFor({ timeout: 10000 });
+  console.log(`opening line OK: ${(await page.locator('.opening-name').first().textContent()) ?? ''}`);
+
+  // Right-click and drag draws an arrow
+  const bb = await page.locator('.board:visible cg-board').boundingBox();
+  if (!bb) throw new Error('no board box');
+  const sq = bb.width / 8;
+  const arrowsBefore = await page.locator('.board:visible svg.cg-shapes g g line').count();
+  await page.mouse.move(bb.x + 3.5 * sq, bb.y + 5.5 * sq);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(bb.x + 5.5 * sq, bb.y + 3.5 * sq);
+  await page.mouse.up({ button: 'right' });
+  await page.waitForTimeout(300);
+  const arrowsAfter = await page.locator('.board:visible svg.cg-shapes g g line').count();
+  if (arrowsAfter <= arrowsBefore) throw new Error(`right-click arrow was not drawn (${arrowsBefore} -> ${arrowsAfter})`);
+  await page.screenshot({ path: path.join(OUT, '1a-user-arrow.png') });
+  console.log('right-click arrow OK');
+
+  // Threats and plan
+  await page.getByRole('button', { name: 'Threats?' }).click();
+  await page.locator('.info-box').waitFor({ timeout: 20000 });
+  console.log(`threat OK: ${(await page.locator('.info-box').first().textContent()) ?? ''}`);
+  await page.getByRole('button', { name: 'Plan' }).click();
+  await page.locator('.plan-item').first().waitFor({ timeout: 5000 });
+  await page.screenshot({ path: path.join(OUT, '1e-plan.png') });
+  console.log('plan OK');
 
   // Hint: first press highlights a piece, second press shows the move.
   await page.getByRole('button', { name: 'Hint' }).click();
@@ -142,6 +175,10 @@ async function main(): Promise<void> {
 
   await page.locator('.coach-card').waitFor({ timeout: 30000 });
   await page.screenshot({ path: path.join(OUT, '2-coach-hint.png') });
+  await page.getByRole('button', { name: 'What did I miss?' }).click();
+  await page.getByText(/Look at what your opponent can do now/).waitFor({ timeout: 5000 });
+  await page.screenshot({ path: path.join(OUT, '2b-coach-threat.png') });
+  console.log('coach card level 1 OK');
   await page.getByRole('button', { name: 'Show best move' }).click();
   await page.waitForTimeout(400);
   await page.screenshot({ path: path.join(OUT, '3-coach-revealed.png') });
@@ -176,18 +213,18 @@ async function main(): Promise<void> {
   await page.screenshot({ path: path.join(OUT, '5-settings.png') });
 
   // Drills: the kept blunder should have become a drill (auto-analysis runs after the game is saved).
-  await page.getByRole('button', { name: 'Drills' }).click();
+  await page.getByRole('button', { name: 'Drills', exact: true }).click();
   let best = '';
   for (let t = 0; t < 100 && !best; t++) {
     best = await page.evaluate(async () => {
-      const w = window as unknown as { coachApi: { drills: { due(tag: null, n: number): Promise<{ bestUci: string }[]> } } };
-      return (await w.coachApi.drills.due(null, 1))[0]?.bestUci ?? '';
+      const w = window as unknown as { coachApi: { drills: { due(f: Record<string, never>, n: number): Promise<{ bestUci: string }[]> } } };
+      return (await w.coachApi.drills.due({}, 1))[0]?.bestUci ?? '';
     });
     if (!best) await page.waitForTimeout(300);
   }
   if (!best) throw new Error('no drill was created from the blunder');
-  await page.getByRole('button', { name: 'Games' }).click();
-  await page.getByRole('button', { name: 'Drills' }).click();
+  await page.getByRole('button', { name: 'Games', exact: true }).click();
+  await page.getByRole('button', { name: 'Drills', exact: true }).click();
   await page.getByText(/Find a better move than/).waitFor({ timeout: 10000 });
   await page.screenshot({ path: path.join(OUT, '6-drill.png') });
   await move(page, best);
@@ -201,13 +238,32 @@ async function main(): Promise<void> {
   await page.screenshot({ path: path.join(OUT, '8-report.png') });
   console.log('report OK');
 
-  await page.getByRole('button', { name: 'Games' }).click();
+  await page.getByRole('button', { name: 'Games', exact: true }).click();
   await page.locator('input[placeholder="e.g. TwoCan"]').first().click();
   await page.keyboard.type('TwoCan');
   await page.getByRole('button', { name: 'Import from Lichess' }).click();
   await page.locator('.games-page .error, .games-page .ok').first().waitFor({ timeout: 30000 });
   await page.screenshot({ path: path.join(OUT, '9-games-import.png') });
   console.log('import path OK (result shown)');
+
+  // Settings: board theme applies immediately
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.locator('label:has-text("Board colours") select').selectOption('green');
+  await page.waitForTimeout(300);
+  const theme = await page.evaluate(async () => document.documentElement.dataset.board ?? '');
+  if (theme !== 'green') throw new Error(`board theme not applied (${theme})`);
+  console.log('board theme OK');
+
+  // Endgame trainer: practise King and queen vs king
+  await page.getByRole('button', { name: 'Endgames' }).click();
+  await page.getByText('King and queen vs king').first().waitFor({ timeout: 5000 });
+  await page.locator('.eg-card').first().getByRole('button', { name: 'Practise' }).click();
+  await page.locator('.goal-banner').waitFor({ timeout: 10000 });
+  await page.getByText('Your move', { exact: true }).waitFor({ timeout: 10000 });
+  const egFen = await fenNow();
+  if (!egFen.startsWith('8/8/8/4k3/8/8/8/KQ6 w')) throw new Error(`endgame did not start from its position (${egFen})`);
+  await page.screenshot({ path: path.join(OUT, '10-endgame.png') });
+  console.log('endgame trainer OK');
   await app.close();
   console.log(`SMOKE OK, screenshots in ${OUT}`);
 }

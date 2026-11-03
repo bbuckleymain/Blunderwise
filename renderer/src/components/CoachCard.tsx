@@ -8,20 +8,25 @@ const LABEL: Record<MoveCheck['classification'], string> = {
   blunder: 'Blunder',
 };
 
+/** 0 = just the verdict, 1 = what the opponent can do now, 2 = the full explanation and the best move. */
+export type RevealLevel = 0 | 1 | 2;
+
 export interface CoachCardProps {
   readonly check: MoveCheck;
   readonly result: ExplainResult;
   readonly narrating: boolean;
-  /** When false, only a hint is shown (for "take back and try again"). */
-  readonly revealed: boolean;
+  readonly level: RevealLevel;
   readonly onTakeBack?: () => void;
-  readonly onReveal?: () => void;
+  readonly onLevel?: (l: RevealLevel) => void;
   readonly onPlayOn?: () => void;
 }
+
+const cap = (s: string): string => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
 
 export function CoachCard(p: CoachCardProps): React.JSX.Element {
   const e = p.result.explanation;
   const threat = p.result.facts.refutationLineSan[0];
+  const top = p.result.tags[0];
   return (
     <div className={`coach-card ${p.check.classification}`}>
       <div className="coach-top">
@@ -31,29 +36,39 @@ export function CoachCard(p: CoachCardProps): React.JSX.Element {
           {p.narrating ? 'Coach is thinking…' : p.result.source === 'llm' ? 'Coach' : 'Quick explanation'}
         </span>
       </div>
-      <h3 className="coach-headline">{e.headline}</h3>
-      {p.revealed ? (
+      {p.level === 0 && (
+        <p className="coach-text">
+          That move gives away too much. Take it back and look for something better, or ask the coach for help.
+        </p>
+      )}
+      {p.level === 1 && (
         <>
+          <p className="coach-text">
+            {threat ? (
+              <>
+                Look at what your opponent can do now: <strong>{threat}</strong> (yellow arrow).
+              </>
+            ) : (
+              'Look at what your opponent can do now.'
+            )}
+          </p>
+          {top && top.tag !== 'positionalLoss' && <p className="coach-text">{cap(top.evidence)}.</p>}
+        </>
+      )}
+      {p.level === 2 && (
+        <>
+          <h3 className="coach-headline">{e.headline}</h3>
           <p className="coach-text">{e.explanation}</p>
           <p className="coach-lesson">
             <strong>Remember:</strong> {e.lesson}
           </p>
         </>
-      ) : (
-        <p className="coach-text">
-          {threat ? (
-            <>
-              Look at what your opponent can do after {p.check.san}: <strong>{threat}</strong>. Take the move back and find something better, or show the answer.
-            </>
-          ) : (
-            'Take the move back and look for something better, or show the answer.'
-          )}
-        </p>
       )}
-      {(p.onTakeBack || p.onReveal || p.onPlayOn) && (
+      {(p.onTakeBack || p.onLevel || p.onPlayOn) && (
         <div className="coach-actions">
           {p.onTakeBack && <button className="primary" onClick={p.onTakeBack}>Take back</button>}
-          {p.onReveal && !p.revealed && <button onClick={p.onReveal}>Show best move</button>}
+          {p.onLevel && p.level === 0 && <button onClick={() => p.onLevel?.(1)}>What did I miss?</button>}
+          {p.onLevel && p.level < 2 && <button onClick={() => p.onLevel?.(2)}>Show best move</button>}
           {p.onPlayOn && <button onClick={p.onPlayOn}>Play on</button>}
         </div>
       )}

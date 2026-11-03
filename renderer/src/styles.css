@@ -130,3 +130,28 @@ square.hint-square { background: radial-gradient(rgba(70, 150, 255, 0.55) 30%, r
 .popover-headline { font-weight: 700; margin: 6px 0 4px; }
 .popover-text { font-size: 14px; }
 .popover-best { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+/* Board colour themes (chessground draws the brown board as an image; these replace it with plain CSS squares). */
+html[data-board='green'] cg-board { background: repeating-conic-gradient(#769656 0 25%, #eeeed2 0 50%) 0 0 / 25% 25% !important; }
+html[data-board='blue'] cg-board { background: repeating-conic-gradient(#8ca2ad 0 25%, #dee3e6 0 50%) 0 0 / 25% 25% !important; }
+html[data-board='gray'] cg-board { background: repeating-conic-gradient(#8d8d8d 0 25%, #e0e0e0 0 50%) 0 0 / 25% 25% !important; }
+.opening-line { margin-top: 8px; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.opening-name { font-weight: 600; }
+.pill { font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+.pill.book { color: #8fd19e; border-color: #3f6b46; }
+.pill.out { color: var(--inaccuracy); border-color: #7a6230; }
+.ml-move.book::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #5fa85f; margin-right: 4px; vertical-align: middle; }
+.info-box { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 10px; font-size: 14px; }
+.plan-item { display: block; width: 100%; text-align: left; margin-top: 6px; }
+.clock-row { display: flex; justify-content: space-between; margin: 8px 0 0; }
+.clock { font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 700; padding: 2px 10px; border-radius: 6px; background: #1b1c1f; }
+.clock.active { background: #24302a; outline: 1px solid var(--accent); }
+.clock.low { color: var(--blunder); }
+.goal-banner { background: #2a2f3a; border: 1px solid #4a5a7a; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.endgame-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.eg-card h3 { margin: 0 0 4px; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--text); }
+label.check input { width: auto; }
+.arrows-hint { margin-left: auto; font-size: 12px; }
+.tag-table thead td { padding: 4px 8px; }

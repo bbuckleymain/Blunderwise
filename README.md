@@ -92,25 +92,51 @@ and click **Save & restart engines**. Maia then shows up as an opponent in **Pla
 
 ## Using it
 
-- **Play**: choose colour, Stockfish level (0–20) or a Maia rating, and play. After each of your moves the
-  coach checks it (~0.1–0.5 s at depth 16). On a blunder the game pauses:
-  - **Take back**: undo and look for a better move yourself (the card only hints at the threat).
-  - **Show best move**: full explanation, arrows (red = yours, green = best), highlighted squares.
+- **Play**: choose colour, Stockfish level (0-20) or a Maia rating, an optional clock, and optionally a custom
+  start position (paste a FEN). After each of your moves the coach checks it (about 0.1-0.5 s at depth 16).
+  On a blunder the game pauses and the coach card unlocks in steps, so you can try to work it out yourself:
+  - **Take back**: undo and look for a better move yourself.
+  - **What did I miss?**: shows what your opponent can do now (yellow arrow) and the tactic behind it.
+  - **Show best move**: the full explanation, arrows (red = yours, green = best) and highlighted squares.
   - **Play on**: keep the move and continue.
-  Smaller mistakes don't interrupt you; they're marked in the move list (`?!`, `?`, `??`).
-  Settings → Coaching can make it stop on mistakes too.
+  Smaller mistakes don't interrupt you; they are marked in the move list (`?!`, `?`, `??`). Hover a marked
+  move to see why. Settings -> Coaching can make the coach stop on mistakes too.
+- **Help while you play** (all instant, none of it uses the AI):
+  - **Hint**: first press highlights the piece the engine would move, second press shows the move.
+  - **Threats?**: what your opponent would do if you passed (yellow arrow), or "nothing urgent".
+  - **Plan**: 2-3 concrete ideas for the position: develop and castle, use an open file, a knight outpost,
+    a passed pawn (yours or theirs), a weak pawn to attack, opposite-side castling, when to trade. Click an
+    idea to highlight its squares. This is for those "I don't know what to do" middlegame moments.
+  - **Take back** (undo your last move and the reply), step through earlier moves with the arrow keys or the
+    buttons under the board, and **right-click and drag on the board to draw your own arrows**
+    (shift/ctrl/alt + right-drag for other colours; a left click clears them).
+- **Openings**: the opening is named as you play (Lichess's free opening list, ~3,900 lines, recognised by
+  position so transpositions count). Moves that are still in theory are marked with a green dot and are never
+  flagged as mistakes unless they really lose ground. The bot (Stockfish) plays varied book moves in the
+  opening so games differ; you can ask it to steer into a particular opening ("Bot steers towards"), e.g. to
+  practise the Sicilian from the other side. Turn this off in Settings.
+- **Endgames**: classic endings against full-strength Stockfish (queen/rook/two-bishop mates, pawn endings with
+  the opposition, Lucena, plus drawing positions to hold such as the Philidor). Every position is verified with
+  Stockfish. The coach still stops you on blunders.
 - **Drills**: every mistake and blunder becomes a puzzle: find a better move than the one you played. Get it
   right and it comes back in 1 day, then 3, then longer; miss it and it comes back in 10 minutes. Wrong answers
-  get the coach's explanation. The Report's **Drill** buttons practise one theme (e.g. only forks).
-- **Games → Import**: enter your Lichess and/or Chess.com username and import your recent games, then
+  get the coach's explanation. The Report's **Drill** buttons practise one theme or one opening.
+- **Games -> Import**: enter your Lichess and/or Chess.com username and import your recent games, then
   **Analyse all** (runs in the background on its own Stockfish, so you can keep playing). Imported games get
-  reviews, drills and count towards the report, just like games against the bot.
+  reviews, drills and count towards the report, just like games against the bot. Copy or save any game as PGN.
 - **Report**: blunders/mistakes per game, what kind of tactic they were (split into ones you allowed and ones
-  you missed), which game phase they happen in, and your biggest leak, with a button to drill it.
-- **Games → Review**: every saved game, analysed with a progress bar. ←/→ step through moves, ↑/↓ jump between
-  mistakes, Home/End. Clicking a mistake shows the arrows and the coach card.
+  you missed), which game phase they happen in, and your biggest leak. **Your openings** shows results per
+  opening and colour, how long you stay in theory, and your opening mistakes, with a button to drill them.
+- **Games -> Review**: every saved game, analysed with a progress bar. Left/right step through moves, up/down jump
+  between mistakes, Home/End. Clicking a mistake shows the arrows and the coach card.
+- **Settings**: AI provider and key, board colours, move sounds, bot opening variety, engine paths.
 
 Analyses, explanations, games and drills are stored in `blunderwise.sqlite` in the app's data folder (see above).
+
+## Weaker opponents
+
+Official Maia models only exist for 1100-1900. For beginners use Stockfish at level 0-3: it deliberately plays
+weak, human-looking moves. (Nothing below 1100 exists for Maia as far as I could find.)
 
 ## Development
 
@@ -142,6 +168,14 @@ OPENROUTER_API_KEY=... npm run harness   # measures the validator's rejection ra
 npm run fixtures:generate             # re-derive fixture evals/lines with Stockfish (WASM)
 ```
 
+```bash
+npm run generate:openings             # rebuild openings/openings.json from the Lichess openings list
+```
+
+```bash
+npm run verify:endgames -- /usr/bin/stockfish   # re-check every endgame position with a native Stockfish
+```
+
 ### Grading the detectors on real puzzles
 
 The 33 fixtures are what the detectors were tuned on. For an honest accuracy number, grade them on the
@@ -167,7 +201,9 @@ npm run build && xvfb-run -a npx tsx scripts/smoke.ts   # end-to-end: plays a ga
 
 | Folder | What |
 |---|---|
-| `explain/` | The explanation pipeline. Pure TS + chess.js, no Node/Electron imports. Facts builder, 13 motif detectors + `positionalLoss` fallback, narrator (`LlmClient`, Gemini adapter, copy-prompt fallback), validator, template, cache. |
+| `explain/` | The explanation pipeline. Pure TS + chess.js, no Node/Electron imports. Facts builder, 13 motif detectors + `positionalLoss` fallback, narrator (`LlmClient`, Gemini and OpenRouter adapters, copy-prompt fallback), validator, template, cache, and the "Plan" helper (`plan.ts`). |
+| `openings/` | Opening book: `openings.json` (generated from lichess-org/chess-openings, CC0) and lookups by position. |
+| `endgames/` | The endgame trainer's verified positions. |
 | `analysis/` | Win probability, move classification, game phase. |
 | `engine/` | `Engine` interface and pure UCI parsing. |
 | `main/` | Electron main: UCI engine processes, engine manager (Stockfish + lc0/Maia), SQLite (`node:sqlite`), settings + `safeStorage`, coach service, IPC. |

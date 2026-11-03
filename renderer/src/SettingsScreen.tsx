@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { EngineStatus, KeyStatus, Settings } from '../../shared/api';
 import { api } from './api';
+import { BOARD_THEMES, applyAppearance } from './appearance';
 
 export function SettingsScreen(): React.JSX.Element {
   const [s, setS] = useState<Settings | null>(null);
@@ -79,6 +80,43 @@ export function SettingsScreen(): React.JSX.Element {
           </label>
         )}
         {msg && <div className="muted">{msg}</div>}
+      </div>
+
+      <div className="panel">
+        <h2>Appearance and sound</h2>
+        <label>
+          Board colours
+          <select
+            value={s.boardTheme}
+            onChange={async (e) => {
+              const next = await api().settings.set({ boardTheme: e.target.value as Settings['boardTheme'] });
+              setS(next);
+              applyAppearance(next);
+            }}
+          >
+            {BOARD_THEMES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={s.sounds}
+            onChange={async (e) => {
+              const next = await api().settings.set({ sounds: e.target.checked });
+              setS(next);
+              applyAppearance(next);
+            }}
+          />
+          Move sounds
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={s.openingVariety} onChange={(e) => void save({ openingVariety: e.target.checked })} />
+          Stockfish bot plays varied openings
+        </label>
       </div>
 
       <div className="panel">

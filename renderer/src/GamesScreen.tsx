@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { GameRecord, LibraryProgress } from '../../shared/api';
 import { api } from './api';
+import { PgnButtons } from './components/PgnButtons';
 
 const SOURCE: Record<GameRecord['source'], string> = { bot: 'vs bot', lichess: 'Lichess', chesscom: 'Chess.com' };
 
@@ -106,10 +107,18 @@ export function GamesScreen(props: { onReview: (id: number) => void }): React.JS
               <tr key={g.id}>
                 <td>{new Date(g.createdAt).toLocaleDateString()}</td>
                 <td className="muted">{SOURCE[g.source]}</td>
-                <td>{g.myColor === 'w' ? 'White' : 'Black'} vs {g.opponent}</td>
+                <td>
+                  {g.myColor === 'w' ? 'White' : 'Black'} vs {g.opponent}
+                  {g.opening && <div className="muted small">{g.opening}</div>}
+                </td>
                 <td>{g.result}</td>
                 <td className="muted">{g.analyzed ? '✓ analysed' : ''}</td>
-                <td><button onClick={() => props.onReview(g.id)}>Review</button></td>
+                <td>
+                  <div className="row-actions">
+                    <button onClick={() => props.onReview(g.id)}>Review</button>
+                    <PgnButtons pgn={g.pgn} name={`blunderwise-game-${g.id}`} />
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -12,6 +12,7 @@ var IPC = {
   checkMove: "coach:checkMove",
   narrate: "coach:narrate",
   hint: "coach:hint",
+  cached: "coach:cached",
   gamesSave: "games:save",
   gamesList: "games:list",
   gamesGet: "games:get",
@@ -47,7 +48,8 @@ var api = {
     prefetch: (fen) => invoke(IPC.prefetch, fen),
     checkMove: (req) => invoke(IPC.checkMove, req),
     narrate: (ctx) => invoke(IPC.narrate, ctx),
-    hint: (fen) => invoke(IPC.hint, fen)
+    hint: (fen) => invoke(IPC.hint, fen),
+    cached: (ctx) => invoke(IPC.cached, ctx)
   },
   games: {
     save: (req) => invoke(IPC.gamesSave, req),

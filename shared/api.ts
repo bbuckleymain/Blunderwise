@@ -17,6 +17,51 @@ export interface BotMoveRequest {
   /** Maia rating, e.g. 1100..1900 */
   readonly maiaRating: number;
   readonly movetimeMs: number;
+  /** Stockfish only: play random book moves in the opening so games vary. */
+  readonly useBook: boolean;
+  /** Steer book moves into this opening family (e.g. "Sicilian Defense"); null = any. */
+  readonly bookFamily: string | null;
+}
+
+export interface OpeningInfo {
+  readonly eco: string;
+  readonly name: string;
+  readonly family: string;
+}
+
+export interface OpeningTrackInfo {
+  readonly opening: OpeningInfo | null;
+  readonly bookPlies: number;
+  readonly leftBook: boolean;
+}
+
+/** One row of the opening report: how you do with one opening family, per colour. */
+export interface OpeningReportRow {
+  readonly family: string;
+  readonly color: Color;
+  readonly games: number;
+  readonly wins: number;
+  readonly draws: number;
+  readonly losses: number;
+  /** Average number of plies you stayed in book. */
+  readonly avgBookPlies: number;
+  readonly analysedGames: number;
+  /** Mistakes and blunders you made in the opening phase of these games. */
+  readonly openingMistakes: number;
+  readonly drills: number;
+}
+
+export interface ThreatInfo {
+  /** The opponent's strongest idea if you did nothing (UCI), or null when there is nothing urgent. */
+  readonly uci: string | null;
+  readonly san: string | null;
+  readonly text: string;
+}
+
+export interface DrillFilter {
+  readonly tag?: MotifTag | null;
+  /** Only opening-phase drills from games with this opening family. */
+  readonly opening?: string | null;
 }
 
 export interface MoveCheckRequest {
@@ -35,6 +80,8 @@ export interface MoveCheck {
   readonly bestMoveSan: string | null;
   /** True when the coach should stop the game (per the stop-on setting). */
   readonly stop: boolean;
+  /** The position after this move is known opening theory (and the move was not a serious error). */
+  readonly book: boolean;
   /** Present for inaccuracies, mistakes and blunders (not for good or already-decided moves). */
   readonly ctx: MistakeContext | null;
   /** Instant template explanation for ctx, so the card can show something immediately. */
@@ -52,6 +99,9 @@ export interface GameRecord {
   readonly opponent: string;
   readonly result: string;
   readonly pgn: string;
+  readonly opening: string | null;
+  readonly openingFamily: string | null;
+  readonly bookPlies: number;
 }
 
 export interface SaveGameRequest {
@@ -103,6 +153,8 @@ export interface DrillRecord {
   readonly classification: string;
   readonly tags: readonly MotifTag[];
   readonly gameId: number | null;
+  readonly opening: string | null;
+  readonly phase: string | null;
   readonly dueAt: number;
   readonly intervalDays: number;
   readonly ease: number;
@@ -146,6 +198,7 @@ export interface ImportResult {
 
 export type StopOn = 'blunder' | 'mistake';
 export type LlmProvider = 'gemini' | 'openrouter';
+export type BoardTheme = 'brown' | 'green' | 'blue' | 'gray';
 
 export interface Settings {
   readonly stopOn: StopOn;
@@ -159,6 +212,9 @@ export interface Settings {
   readonly maiaWeightsDir: string;
   readonly lichessUsername: string;
   readonly chesscomUsername: string;
+  readonly openingVariety: boolean;
+  readonly boardTheme: BoardTheme;
+  readonly sounds: boolean;
 }
 
 export interface KeyStatus {
@@ -180,6 +236,8 @@ export interface CoachApi {
     narrate(ctx: MistakeContext): Promise<ExplainResult>;
     /** The engine's best move (UCI) in this position, for hints. */
     hint(fen: string): Promise<string | null>;
+    /** What would the opponent do if you passed? Never calls the AI. */
+    threat(fen: string): Promise<ThreatInfo>;
     /** The coach's AI explanation for this mistake if one is already cached (never calls the AI). */
     cached(ctx: MistakeContext): Promise<Explanation | null>;
   };
@@ -196,8 +254,14 @@ export interface CoachApi {
     onProgress(cb: (p: LibraryProgress) => void): () => void;
     report(): Promise<ReportData>;
   };
+  openings: {
+    /** `fens[i]` = position after ply i+1 of the game. */
+    track(fens: readonly string[]): Promise<OpeningTrackInfo>;
+    families(): Promise<string[]>;
+    report(): Promise<OpeningReportRow[]>;
+  };
   drills: {
-    due(tag: MotifTag | null, limit: number): Promise<DrillRecord[]>;
+    due(filter: DrillFilter, limit: number): Promise<DrillRecord[]>;
     counts(): Promise<DrillCounts>;
     answer(id: number, moveUci: string): Promise<DrillAnswer>;
   };
@@ -222,6 +286,10 @@ export const IPC = {
   checkMove: 'coach:checkMove',
   narrate: 'coach:narrate',
   hint: 'coach:hint',
+  threat: 'coach:threat',
+  openingTrack: 'openings:track',
+  openingFamilies: 'openings:families',
+  openingReport: 'openings:report',
   cached: 'coach:cached',
   gamesSave: 'games:save',
   gamesList: 'games:list',

@@ -11,6 +11,8 @@ export interface MoveListProps {
   readonly checks: ReadonlyMap<number, MoveCheck>;
   readonly current?: number;
   readonly onSelect?: (ply: number) => void;
+  /** Plies (from the start) that followed opening theory. */
+  readonly bookPlies?: number;
 }
 
 interface Hover {
@@ -78,7 +80,7 @@ export function MoveList(p: MoveListProps): React.JSX.Element {
       const explainable = c && c.classification !== 'good' && c.instant;
       return (
         <span
-          className={`ml-move ${c ? c.classification : ''} ${p.current === ply ? 'current' : ''} ${explainable ? 'explainable' : ''}`}
+          className={`ml-move ${c ? c.classification : ''} ${p.current === ply ? 'current' : ''} ${explainable ? 'explainable' : ''} ${p.bookPlies !== undefined && ply < p.bookPlies ? 'book' : ''}`}
           onClick={p.onSelect ? () => p.onSelect?.(ply) : undefined}
           onMouseEnter={
             explainable && c

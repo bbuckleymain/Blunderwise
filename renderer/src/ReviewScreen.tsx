@@ -9,8 +9,10 @@ import { uciFrom, uciTo } from './chessUtil';
 import { Board } from './components/Board';
 import { CoachCard } from './components/CoachCard';
 import { MoveList } from './components/MoveList';
+import { PgnButtons } from './components/PgnButtons';
 
 const START = new Chess().fen();
+const gameStart = (moves: readonly ReviewedMove[]): string => moves[0]?.fenBefore ?? START;
 
 export function ReviewScreen(props: { gameId: number; onBack: () => void }): React.JSX.Element {
   const [game, setGame] = useState<GameRecord | null>(null);
@@ -86,7 +88,7 @@ export function ReviewScreen(props: { gameId: number; onBack: () => void }): Rea
     );
   }
 
-  const fen = current ? current.fenAfter : START;
+  const fen = current ? current.fenAfter : gameStart(moves);
   const check: MoveCheck | null = current?.check ?? null;
   const shapes: DrawShape[] = [];
   if (current && check?.ctx && check.bestMoveUci) {
@@ -117,6 +119,15 @@ export function ReviewScreen(props: { gameId: number; onBack: () => void }): Rea
             <span>Review: You ({game.myColor === 'w' ? 'White' : 'Black'}) vs {game.opponent} · {game.result}</span>
             <button onClick={props.onBack}>Back</button>
           </div>
+          {game.opening && (
+            <div className="opening-line">
+              <span className="opening-name">{game.opening}</span>
+              <span className="pill out">out of book after move {Math.max(1, Math.ceil(game.bookPlies / 2))}</span>
+            </div>
+          )}
+          <div className="toolbar">
+            <PgnButtons pgn={game.pgn} name={`blunderwise-game-${game.id}`} />
+          </div>
           <h4>Your mistakes ({mistakes.length})</h4>
           {mistakes.length === 0 && <div className="muted">No inaccuracies, mistakes or blunders. Nice game!</div>}
           <div className="mistake-list">
@@ -128,10 +139,10 @@ export function ReviewScreen(props: { gameId: number; onBack: () => void }): Rea
           </div>
         </div>
         {current && check?.ctx && exp && (
-          <CoachCard check={check} result={exp} narrating={loading === current.ply} revealed />
+          <CoachCard check={check} result={exp} narrating={loading === current.ply} level={2} />
         )}
         <div className="panel grow">
-          <MoveList sans={moves.map((m) => m.san)} checks={checksMap} current={ply} onSelect={setPly} />
+          <MoveList sans={moves.map((m) => m.san)} checks={checksMap} current={ply} onSelect={setPly} bookPlies={game.bookPlies} />
         </div>
       </div>
     </div>

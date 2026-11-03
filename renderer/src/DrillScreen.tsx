@@ -13,7 +13,7 @@ import { MOTIF_LABEL, inHowLong } from './labels';
 
 const cg = (c: 'w' | 'b'): 'white' | 'black' => (c === 'w' ? 'white' : 'black');
 
-export function DrillScreen(props: { tag: MotifTag | null; onClearTag: () => void }): React.JSX.Element {
+export function DrillScreen(props: { tag: MotifTag | null; opening: string | null; onClearTag: () => void }): React.JSX.Element {
   const [queue, setQueue] = useState<DrillRecord[] | null>(null);
   const [counts, setCounts] = useState<DrillCounts | null>(null);
   const [fen, setFen] = useState<string>('');
@@ -27,14 +27,14 @@ export function DrillScreen(props: { tag: MotifTag | null; onClearTag: () => voi
   const [score, setScore] = useState({ right: 0, done: 0 });
 
   const load = useCallback(async () => {
-    const [q, c] = await Promise.all([api().drills.due(props.tag, 50), api().drills.counts()]);
+    const [q, c] = await Promise.all([api().drills.due({ tag: props.tag, opening: props.opening }, 50), api().drills.counts()]);
     setQueue(q);
     setCounts(c);
     setFen(q[0]?.fen ?? '');
     setAnswer(null);
     setExplain(null);
     setHint(false);
-  }, [props.tag]);
+  }, [props.tag, props.opening]);
 
   useEffect(() => {
     setScore({ right: 0, done: 0 });
@@ -102,14 +102,14 @@ export function DrillScreen(props: { tag: MotifTag | null; onClearTag: () => voi
   if (!drill) {
     return (
       <div className="panel drill-empty">
-        <h2>{props.tag ? `No ${MOTIF_LABEL[props.tag].toLowerCase()} drills due` : 'No drills due'}</h2>
+        <h2>{props.tag ? `No ${MOTIF_LABEL[props.tag].toLowerCase()} drills due` : props.opening ? `No ${props.opening} opening drills due` : 'No drills due'}</h2>
         {score.done > 0 && <p>This session: {score.right} / {score.done} correct.</p>}
         <p className="muted">
           {counts.total === 0
             ? 'Drills are made automatically from your mistakes and blunders: play a game, or import and analyse your games in Games.'
             : `You have ${counts.total} drills. ${counts.nextDueAt ? `The next one is due in ${inHowLong(counts.nextDueAt)}.` : ''}`}
         </p>
-        {props.tag && <button onClick={props.onClearTag}>Show all drills</button>}
+        {(props.tag || props.opening) && <button onClick={props.onClearTag}>Show all drills</button>}
       </div>
     );
   }
@@ -154,9 +154,9 @@ export function DrillScreen(props: { tag: MotifTag | null; onClearTag: () => voi
         <div className="panel">
           <div className="game-head">
             <span>
-              Drill {props.tag ? `· ${MOTIF_LABEL[props.tag]}` : ''} · {queue.length} due
+              Drill {props.tag ? `· ${MOTIF_LABEL[props.tag]}` : ''}{props.opening ? `· ${props.opening} (opening)` : ''} · {queue.length} due
             </span>
-            {props.tag && <button onClick={props.onClearTag}>All drills</button>}
+            {(props.tag || props.opening) && <button onClick={props.onClearTag}>All drills</button>}
           </div>
           <h3 className="coach-headline">Find a better move than {drill.playedSan}</h3>
           <p className="muted">
@@ -193,7 +193,7 @@ export function DrillScreen(props: { tag: MotifTag | null; onClearTag: () => voi
           )}
         </div>
         {answer && !answer.correct && explain && answer.check.ctx && (
-          <CoachCard check={answer.check} result={explain} narrating={narrating} revealed />
+          <CoachCard check={answer.check} result={explain} narrating={narrating} level={2} />
         )}
       </div>
     </div>

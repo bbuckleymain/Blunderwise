@@ -47,6 +47,9 @@ const settings: Settings = {
   maiaWeightsDir: weights,
   lichessUsername: '',
   chesscomUsername: '',
+  openingVariety: true,
+  boardTheme: 'brown',
+  sounds: true,
 };
 
 const engines: { dispose(): void }[] = [];

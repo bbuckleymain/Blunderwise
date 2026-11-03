@@ -1,5 +1,6 @@
 import { Chess } from 'chess.js';
 import { classifyMove, isDecidedEitherWay } from '../analysis/classify';
+import { isBookPosition } from '../openings/book';
 import { negateScore, type Score } from '../analysis/score';
 import { winProbability } from '../analysis/winProbability';
 import type { EngineEval } from '../engine/types';
@@ -8,7 +9,7 @@ import { GeminiClient } from '../explain/narrator/gemini';
 import type { LlmClient } from '../explain/narrator/llm';
 import { OpenRouterClient } from '../explain/narrator/openrouter';
 import type { ExplainResult, Explanation, MistakeContext } from '../explain/types';
-import type { MoveCheck, MoveCheckRequest, ReviewProgress, ReviewedMove } from '../shared/api';
+import type { MoveCheck, MoveCheckRequest, ReviewProgress, ReviewedMove, ThreatInfo } from '../shared/api';
 import type { Db } from './db';
 import type { EngineManager } from './engineManager';
 import type { SettingsStore } from './settings';
@@ -54,6 +55,44 @@ export class CoachService {
     return job;
   }
 
+  /**
+   * What would the opponent do if you passed? Never calls the AI: flips the side to move, asks the engine,
+   * and describes the answer in words. "Nothing urgent" when passing would cost you little.
+   */
+  async threat(fen: string): Promise<ThreatInfo> {
+    const now = new Chess(fen);
+    if (now.isGameOver()) return { uci: null, san: null, text: 'The game is over.' };
+    if (now.inCheck()) return { uci: null, san: null, text: 'You are in check: deal with the check first.' };
+    const me = now.turn();
+    const parts = fen.split(' ');
+    parts[1] = me === 'w' ? 'b' : 'w';
+    parts[3] = '-';
+    const flipped = parts.join(' ');
+    let opp: Chess;
+    try {
+      opp = new Chess(flipped);
+    } catch {
+      return { uci: null, san: null, text: 'Nothing urgent.' };
+    }
+    const [mine, theirs] = await Promise.all([this.analyzeFen(fen), this.analyzeFen(flipped)]);
+    const myWinNow = winProbability({ cp: mine.cp, mate: mine.mate });
+    const myWinIfPass = 100 - winProbability({ cp: theirs.cp, mate: theirs.mate });
+    const best = theirs.bestMove;
+    if (!best) return { uci: null, san: null, text: 'Nothing urgent.' };
+    const m = opp.move(parseUciMove(best));
+    const mate = theirs.mate !== null && theirs.mate > 0 && theirs.mate <= 3;
+    if (!mate && myWinNow - myWinIfPass < 8) {
+      return { uci: null, san: null, text: 'Nothing urgent: your opponent has no strong threat right now.' };
+    }
+    const names: Record<string, string> = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+    let text: string;
+    if (mate) text = `Your opponent threatens ${m.san}, leading to checkmate.`;
+    else if (m.captured) text = `Your opponent threatens ${m.san}, capturing your ${names[m.captured]} on ${m.to}.`;
+    else if (m.san.includes('+')) text = `Your opponent threatens ${m.san}, a check that wins ground.`;
+    else text = `Your opponent threatens ${m.san}, which would put you in trouble.`;
+    return { uci: best, san: m.san, text };
+  }
+
   async prefetch(fen: string): Promise<void> {
     await this.analyzeFen(fen).catch(() => undefined);
   }
@@ -70,17 +109,20 @@ export class CoachService {
     const wpB = winProbability(evalBefore);
 
     if (chess.isCheckmate()) {
-      return { ...base, classification: 'good', winProbBefore: wpB, winProbAfter: 100, stop: false, ctx: null, instant: null };
+      return { ...base, classification: 'good', winProbBefore: wpB, winProbAfter: 100, stop: false, book: isBookPosition(chess.fen()), ctx: null, instant: null };
     }
     const afterRaw = await this.analyzeFen(chess.fen(), lane);
     const evalAfter = negateScore({ cp: afterRaw.cp, mate: afterRaw.mate });
     const wpA = winProbability(evalAfter);
     let classification = classifyMove(wpB, wpA);
     if (best === req.moveUci) classification = 'good'; // engine noise between two searches
+    // Known opening theory is not a mistake: only a serious drop (e.g. a gambit that really fails) is still flagged.
+    const book = isBookPosition(chess.fen());
+    if (book && (classification === 'inaccuracy' || classification === 'mistake') && wpB - wpA < 5) classification = 'good';
 
     const flagged = classification !== 'good' && !isDecidedEitherWay(wpB, wpA) && best !== null;
     if (!flagged || !best) {
-      return { ...base, classification, winProbBefore: wpB, winProbAfter: wpA, stop: false, ctx: null, instant: null };
+      return { ...base, classification, winProbBefore: wpB, winProbAfter: wpA, stop: false, book, ctx: null, instant: null };
     }
     const ctx: MistakeContext = {
       fen: req.fenBefore,
@@ -103,7 +145,7 @@ export class CoachService {
     } catch (e) {
       console.error('explainInstantly failed', e);
     }
-    return { ...base, classification, winProbBefore: wpB, winProbAfter: wpA, stop, ctx, instant };
+    return { ...base, classification, winProbBefore: wpB, winProbAfter: wpA, stop, book, ctx, instant };
   }
 
   /** The LLM for the selected provider, or null when that provider has no key (template-only). */

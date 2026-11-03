@@ -3584,6 +3584,7 @@ var IPC = {
   checkMove: "coach:checkMove",
   narrate: "coach:narrate",
   hint: "coach:hint",
+  cached: "coach:cached",
   gamesSave: "games:save",
   gamesList: "games:list",
   gamesGet: "games:get",
@@ -5254,6 +5255,9 @@ var OpenRouterClient = class {
 };
 
 // explain/index.ts
+async function cachedExplanation(ctx, store) {
+  return new ExplanationCache(store).get(cacheKey(ctx.fen, ctx.movePlayedUci, PROMPT_VERSION));
+}
 function explainInstantly(ctx) {
   const a = analyze(ctx);
   const tags = detectMotifs(a);
@@ -5387,6 +5391,9 @@ var CoachService = class {
     }
     const client = new GeminiClient({ apiKey: key, model: s.geminiModel, timeoutMs });
     return { client, label: `Gemini (${s.geminiModel})`, lastModel: () => null };
+  }
+  cached(ctx) {
+    return cachedExplanation(ctx, this.db.explanationStore());
   }
   narrate(ctx) {
     return explainMistake(ctx, { llm: this.llm()?.client ?? null, cache: this.db.explanationStore() });
@@ -6108,6 +6115,7 @@ void import_electron2.app.whenReady().then(() => {
   import_electron2.ipcMain.handle(IPC.prefetch, (_e, fen) => coach.prefetch(fen));
   import_electron2.ipcMain.handle(IPC.checkMove, (_e, req) => coach.checkMove(req));
   import_electron2.ipcMain.handle(IPC.narrate, (_e, ctx) => coach.narrate(ctx));
+  import_electron2.ipcMain.handle(IPC.cached, (_e, ctx) => coach.cached(ctx));
   import_electron2.ipcMain.handle(IPC.hint, async (_e, fen) => (await coach.analyzeFen(fen)).bestMove);
   import_electron2.ipcMain.handle(IPC.gamesSave, (_e, req) => {
     const id = store.saveGame(req);
