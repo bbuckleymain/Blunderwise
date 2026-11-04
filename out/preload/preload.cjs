@@ -12,6 +12,10 @@ var IPC = {
   checkMove: "coach:checkMove",
   narrate: "coach:narrate",
   hint: "coach:hint",
+  threat: "coach:threat",
+  openingTrack: "openings:track",
+  openingFamilies: "openings:families",
+  openingReport: "openings:report",
   cached: "coach:cached",
   gamesSave: "games:save",
   gamesList: "games:list",
@@ -49,6 +53,7 @@ var api = {
     checkMove: (req) => invoke(IPC.checkMove, req),
     narrate: (ctx) => invoke(IPC.narrate, ctx),
     hint: (fen) => invoke(IPC.hint, fen),
+    threat: (fen) => invoke(IPC.threat, fen),
     cached: (ctx) => invoke(IPC.cached, ctx)
   },
   games: {
@@ -68,8 +73,13 @@ var api = {
     },
     report: () => invoke(IPC.report)
   },
+  openings: {
+    track: (fens) => invoke(IPC.openingTrack, fens),
+    families: () => invoke(IPC.openingFamilies),
+    report: () => invoke(IPC.openingReport)
+  },
   drills: {
-    due: (tag, limit) => invoke(IPC.drillsDue, tag, limit),
+    due: (filter, limit) => invoke(IPC.drillsDue, filter, limit),
     counts: () => invoke(IPC.drillsCounts),
     answer: (id, uci) => invoke(IPC.drillsAnswer, id, uci)
   },
