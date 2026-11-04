@@ -71,6 +71,8 @@ export function MoveList(p: MoveListProps): React.JSX.Element {
     };
   }, [hover, cached]);
 
+  if (p.sans.length === 0) return <div className="empty-note">Moves appear here as you play.</div>;
+
   const rows: React.JSX.Element[] = [];
   for (let i = 0; i < p.sans.length; i += 2) {
     const cell = (ply: number): React.JSX.Element | null => {
@@ -78,22 +80,30 @@ export function MoveList(p: MoveListProps): React.JSX.Element {
       if (san === undefined) return <span className="ml-move" />;
       const c = p.checks.get(ply);
       const explainable = c && c.classification !== 'good' && c.instant;
-      return (
-        <span
-          className={`ml-move ${c ? c.classification : ''} ${p.current === ply ? 'current' : ''} ${explainable ? 'explainable' : ''} ${p.bookPlies !== undefined && ply < p.bookPlies ? 'book' : ''}`}
-          onClick={p.onSelect ? () => p.onSelect?.(ply) : undefined}
-          onMouseEnter={
-            explainable && c
-              ? (ev) => {
-                  const r = ev.currentTarget.getBoundingClientRect();
-                  setHover({ ply, check: c, x: r.left, y: r.bottom });
-                }
-              : undefined
-          }
-          onMouseLeave={explainable ? () => setHover(null) : undefined}
-        >
-          {san}
-          {c ? MARK[c.classification] : ''}
+      const className = `ml-move ${c ? c.classification : ''} ${p.current === ply ? 'current' : ''} ${explainable ? 'explainable' : ''} ${p.bookPlies !== undefined && ply < p.bookPlies ? 'book' : ''}`;
+      const hoverProps =
+        explainable && c
+          ? {
+              onMouseEnter: (ev: React.MouseEvent<HTMLElement>) => {
+                const r = ev.currentTarget.getBoundingClientRect();
+                setHover({ ply, check: c, x: r.left, y: r.bottom });
+              },
+              onMouseLeave: () => setHover(null),
+              onFocus: (ev: React.FocusEvent<HTMLElement>) => {
+                const r = ev.currentTarget.getBoundingClientRect();
+                setHover({ ply, check: c, x: r.left, y: r.bottom });
+              },
+              onBlur: () => setHover(null),
+            }
+          : {};
+      const label = `${san}${c ? MARK[c.classification] : ''}`;
+      return p.onSelect ? (
+        <button type="button" className={className} aria-current={p.current === ply ? 'true' : undefined} onClick={() => p.onSelect?.(ply)} {...hoverProps}>
+          {label}
+        </button>
+      ) : (
+        <span className={className} {...hoverProps}>
+          {label}
         </span>
       );
     };

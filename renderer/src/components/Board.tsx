@@ -18,6 +18,8 @@ export interface BoardProps {
   readonly highlight?: readonly Key[];
   /** Hint: the square of the piece the engine would move. */
   readonly hintSquare?: Key;
+  /** Piece sliding. Turn off for keyboard-driven stepping through moves (repeated actions should feel instant). */
+  readonly animate?: boolean;
   readonly onMove?: (from: Key, to: Key) => void;
 }
 
@@ -35,7 +37,7 @@ export function Board(props: BoardProps): React.JSX.Element {
     lastMove: props.lastMove,
     check: props.check ?? false,
     coordinates: true,
-    animation: { enabled: true, duration: 180 },
+    animation: { enabled: (props.animate ?? true) && !window.matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 150 },
     highlight: {
       lastMove: true,
       check: true,
@@ -59,7 +61,7 @@ export function Board(props: BoardProps): React.JSX.Element {
   // Only touch chessground when something it shows actually changed. Re-applying the whole config on every
   // React render (e.g. a ticking clock) would cancel half-made moves and erase arrows the user drew.
   const boardKey = (): string =>
-    JSON.stringify([props.fen, props.orientation, props.turnColor, props.movableColor ?? null, props.lastMove ?? null, props.check ?? false, props.highlight ?? [], props.hintSquare ?? null]);
+    JSON.stringify([props.fen, props.orientation, props.turnColor, props.movableColor ?? null, props.lastMove ?? null, props.check ?? false, props.highlight ?? [], props.hintSquare ?? null, props.animate ?? true]);
   const shapesKey = (): string => JSON.stringify(props.shapes ?? []);
   const applied = useRef({ board: '', shapes: '' });
 

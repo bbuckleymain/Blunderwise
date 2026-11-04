@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ExplainResult, MotifTag } from '../../explain/types';
 import type { DrillAnswer, DrillCounts, DrillRecord } from '../../shared/api';
 import { api } from './api';
+import { Skeleton } from './components/Skeleton';
 import { isPromotion, legalDests, uciFrom, uciTo } from './chessUtil';
 import { Board } from './components/Board';
 import { CoachCard } from './components/CoachCard';
@@ -97,7 +98,7 @@ export function DrillScreen(props: { tag: MotifTag | null; opening: string | nul
     setExplain(null);
   };
 
-  if (!queue || !counts) return <div className="panel">Loading…</div>;
+  if (!queue || !counts) return <Skeleton />;
 
   if (!drill) {
     return (

@@ -42,7 +42,10 @@ export function App(): React.JSX.Element {
   return (
     <div className="app">
       <nav className="nav">
-        <span className="logo">♞ Blunderwise</span>
+        <span className="logo">
+          <span className="logo-mark" aria-hidden="true">♞</span>
+          <span className="wordmark">Blunderwise</span>
+        </span>
         {tab('play', 'Play')}
         {tab('drills', 'Drills')}
         {tab('endgames', 'Endgames')}
@@ -89,7 +92,7 @@ export function App(): React.JSX.Element {
           />
         )}
         {route.name === 'settings' && <SettingsScreen />}
-        {route.name === 'review' && <ReviewScreen gameId={route.gameId} onBack={() => setRoute({ name: 'games' })} />}
+        {route.name === 'review' && <ReviewScreen key={route.gameId} gameId={route.gameId} onBack={() => setRoute({ name: 'games' })} />}
       </main>
     </div>
   );

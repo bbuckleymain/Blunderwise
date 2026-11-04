@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { EngineStatus, KeyStatus, Settings } from '../../shared/api';
 import { api } from './api';
+import { Skeleton } from './components/Skeleton';
 import { BOARD_THEMES, applyAppearance } from './appearance';
+import { DataPanel } from './components/DataPanel';
 
 export function SettingsScreen(): React.JSX.Element {
   const [s, setS] = useState<Settings | null>(null);
@@ -22,7 +24,7 @@ export function SettingsScreen(): React.JSX.Element {
     setMsg(null);
   }, [provider]);
 
-  if (!s) return <div className="panel">Loading…</div>;
+  if (!s) return <Skeleton />;
   const save = async (patch: Partial<Settings>): Promise<void> => {
     setS(await api().settings.set(patch));
   };
@@ -137,6 +139,8 @@ export function SettingsScreen(): React.JSX.Element {
           <input type="range" min={100} max={3000} step={100} value={s.botMovetimeMs} onChange={(e) => void save({ botMovetimeMs: Number(e.target.value) })} />
         </label>
       </div>
+
+      <DataPanel />
 
       <div className="panel">
         <h2>Engines</h2>

@@ -82,7 +82,7 @@ export function ReviewScreen(props: { gameId: number; onBack: () => void }): Rea
     return (
       <div className="panel review-loading">
         <h2>Analyzing your moves…</h2>
-        <div className="progress"><div className="progress-bar" style={{ width: `${pct}%` }} /></div>
+        <div className="progress"><div className="progress-bar" style={{ transform: `scaleX(${pct / 100})` }} /></div>
         <div>{progress.done} / {progress.total} moves</div>
       </div>
     );
@@ -105,6 +105,7 @@ export function ReviewScreen(props: { gameId: number; onBack: () => void }): Rea
       <div className="board-col">
         <Board
           fen={fen}
+          animate={false}
           orientation={game.myColor === 'w' ? 'white' : 'black'}
           turnColor={turn === 'w' ? 'white' : 'black'}
           lastMove={current ? [uciFrom(current.uci), uciTo(current.uci)] : undefined}

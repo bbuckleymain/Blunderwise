@@ -48,16 +48,26 @@ function queenBlunder(fen: string): string | null {
 }
 
 async function main(): Promise<void> {
-  const app = await _electron.launch({
+  const launchOptions = {
     executablePath: process.env.SMOKE_EXE ?? (require('electron') as unknown as string),
     args: process.env.SMOKE_EXE ? ['--no-sandbox'] : ['.', '--no-sandbox'],
     env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: '1' } as Record<string, string>,
-  });
+  };
+  const app = await _electron.launch(launchOptions);
   const page = await app.firstWindow();
   page.on('console', (m) => { const t = m.text?.() ?? ''; if (/error|warn/i.test(t)) console.log(`[page] ${t}`); });
   page.on('pageerror', (e) => console.log(`[pageerror] ${e.message ?? ''}`));
   await page.getByRole('button', { name: 'Start game' }).waitFor({ timeout: 15000 });
   await page.screenshot({ path: path.join(OUT, '1-setup.png') });
+  // A custom position that is already over must be refused with a clear message (not a bot error).
+  await page.waitForTimeout(800);
+  await page.locator('label:has-text("custom position") input').click();
+  await page.locator('input[placeholder^="paste a FEN"]').click();
+  await page.keyboard.type('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1'); // stalemate
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await page.getByText(/already a draw/).waitFor({ timeout: 5000 });
+  console.log('finished custom position refused OK');
+  await page.locator('label:has-text("custom position") input').click();
   await page.locator('label:has-text("Clock") select').selectOption('5+0');
   await page.getByRole('button', { name: 'Start game' }).click();
   await page.locator('.clock').first().waitFor({ timeout: 5000 });
@@ -74,6 +84,10 @@ async function main(): Promise<void> {
   await page.locator('.opening-line').waitFor({ timeout: 10000 });
   console.log(`opening line OK: ${(await page.locator('.opening-name').first().textContent()) ?? ''}`);
 
+  // Wait for the bot's reply: the board clears hand-drawn arrows whenever the position changes.
+  for (let t = 0; t < 100 && !/ w .* 2$/.test(await fenNow()); t++) await page.waitForTimeout(150);
+  await waitMyTurn();
+
   // Right-click and drag draws an arrow
   const bb = await page.locator('.board:visible cg-board').boundingBox();
   if (!bb) throw new Error('no board box');
@@ -81,6 +95,7 @@ async function main(): Promise<void> {
   const arrowsBefore = await page.locator('.board:visible svg.cg-shapes g g line').count();
   await page.mouse.move(bb.x + 3.5 * sq, bb.y + 5.5 * sq);
   await page.mouse.down({ button: 'right' });
+  await page.mouse.move(bb.x + 4.5 * sq, bb.y + 4.5 * sq);
   await page.mouse.move(bb.x + 5.5 * sq, bb.y + 3.5 * sq);
   await page.mouse.up({ button: 'right' });
   await page.waitForTimeout(300);
@@ -254,6 +269,19 @@ async function main(): Promise<void> {
   if (theme !== 'green') throw new Error(`board theme not applied (${theme})`);
   console.log('board theme OK');
 
+  // Your data: counts are shown and a manual backup can be made
+  await page.getByText('Your data').first().waitFor({ timeout: 5000 });
+  await page.getByText(/\d+ games?/).first().waitFor({ timeout: 5000 });
+  await page.getByRole('button', { name: 'Back up now' }).click();
+  await page.getByText(/Backup saved/).waitFor({ timeout: 10000 });
+  await page.screenshot({ path: path.join(OUT, '9b-your-data.png') });
+  console.log('data panel + manual backup OK');
+
+  // The record against the bots is listed on the Games screen
+  await page.getByRole('button', { name: 'Games', exact: true }).click();
+  await page.getByText('Your record against the bots').waitFor({ timeout: 5000 });
+  console.log('bot record OK');
+
   // Endgame trainer: practise King and queen vs king
   await page.getByRole('button', { name: 'Endgames' }).click();
   await page.getByText('King and queen vs king').first().waitFor({ timeout: 5000 });
@@ -265,6 +293,20 @@ async function main(): Promise<void> {
   await page.screenshot({ path: path.join(OUT, '10-endgame.png') });
   console.log('endgame trainer OK');
   await app.close();
+
+  // Restart: everything is still there (this is what an app update looks like to the database).
+  const app2 = await _electron.launch(launchOptions);
+  const page2 = await app2.firstWindow();
+  await page2.getByRole('button', { name: 'Games', exact: true }).click();
+  await page2.getByText('Your record against the bots').waitFor({ timeout: 10000 });
+  await page2.getByText(/^Your games \(\d+\)$/).waitFor({ timeout: 5000 });
+  const gamesHeading = (await page2.getByText(/^Your games \(\d+\)$/).textContent()) ?? '';
+  if (/\(0\)/.test(gamesHeading)) throw new Error('games were lost across a restart');
+  await page2.getByRole('button', { name: 'Settings' }).click();
+  await page2.getByText(/Latest backup:/).waitFor({ timeout: 5000 });
+  await page2.screenshot({ path: path.join(OUT, '11-after-restart.png') });
+  console.log(`persistence across restart OK (${gamesHeading})`);
+  await app2.close();
   console.log(`SMOKE OK, screenshots in ${OUT}`);
 }
 

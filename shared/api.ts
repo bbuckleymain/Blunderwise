@@ -104,6 +104,77 @@ export interface GameRecord {
   readonly bookPlies: number;
 }
 
+/** Your results against one of the app's own opponents. */
+export interface OpponentRecordRow {
+  readonly opponent: string;
+  readonly games: number;
+  readonly wins: number;
+  readonly draws: number;
+  readonly losses: number;
+  readonly lastPlayed: string;
+}
+
+export interface BackupGame {
+  readonly uid: string;
+  readonly createdAt: string;
+  readonly myColor: Color;
+  readonly opponent: string;
+  readonly result: string;
+  readonly pgn: string;
+  readonly source: string;
+  readonly externalId: string | null;
+}
+
+export interface BackupDrill {
+  readonly gameUid: string | null;
+  readonly fen: string;
+  readonly myColor: Color;
+  readonly playedUci: string;
+  readonly playedSan: string;
+  readonly bestUci: string;
+  readonly bestSan: string;
+  readonly classification: string;
+  readonly tags: readonly string[];
+  readonly opening: string | null;
+  readonly phase: string | null;
+  readonly createdAt: number;
+  readonly dueAt: number;
+  readonly intervalDays: number;
+  readonly ease: number;
+  readonly reps: number;
+  readonly lapses: number;
+}
+
+/** A portable backup of your games and drills, independent of the app version. */
+export interface BackupFile {
+  readonly format: 'blunderwise-backup';
+  readonly version: 1;
+  readonly exportedAt: string;
+  readonly games: readonly BackupGame[];
+  readonly drills: readonly BackupDrill[];
+}
+
+export interface BackupFileInfo {
+  readonly name: string;
+  readonly bytes: number;
+  readonly at: string;
+}
+
+export interface DataInfo {
+  readonly folder: string;
+  readonly databaseBytes: number;
+  readonly games: number;
+  readonly drills: number;
+  readonly backups: readonly BackupFileInfo[];
+}
+
+export interface ImportBackupResult {
+  readonly games: number;
+  readonly drills: number;
+  /** Games that were already in your library. */
+  readonly skipped: number;
+}
+
 export interface SaveGameRequest {
   readonly myColor: Color;
   readonly opponent: string;
@@ -245,6 +316,8 @@ export interface CoachApi {
     save(req: SaveGameRequest): Promise<number>;
     list(): Promise<GameRecord[]>;
     get(id: number): Promise<GameRecord | null>;
+    /** Results against each of the app's own bots. */
+    record(): Promise<OpponentRecordRow[]>;
   };
   library: {
     importLichess(username: string, max: number): Promise<ImportResult>;
@@ -268,6 +341,18 @@ export interface CoachApi {
   review: {
     analyze(pgn: string, myColor: Color): Promise<ReviewedMove[]>;
     onProgress(cb: (p: ReviewProgress) => void): () => void;
+  };
+  /** Where your games live, backups, and moving them between installs. Dialogs are opened by the main process. */
+  data: {
+    info(): Promise<DataInfo>;
+    backupNow(): Promise<string>;
+    /** Save games + drills as a .json backup. null = cancelled. */
+    exportBackup(): Promise<{ path: string; games: number; drills: number } | null>;
+    /** Save every game as one .pgn file. null = cancelled. */
+    exportPgn(): Promise<{ path: string; games: number } | null>;
+    /** Merge a .json backup into the library. null = cancelled. */
+    importBackup(): Promise<ImportBackupResult | null>;
+    openFolder(): Promise<void>;
   };
   settings: {
     get(): Promise<Settings>;
@@ -294,6 +379,13 @@ export const IPC = {
   gamesSave: 'games:save',
   gamesList: 'games:list',
   gamesGet: 'games:get',
+  gamesRecord: 'games:record',
+  dataInfo: 'data:info',
+  dataBackupNow: 'data:backupNow',
+  dataExportBackup: 'data:exportBackup',
+  dataExportPgn: 'data:exportPgn',
+  dataImportBackup: 'data:importBackup',
+  dataOpenFolder: 'data:openFolder',
   reviewAnalyze: 'review:analyze',
   reviewProgress: 'review:progress',
   settingsGet: 'settings:get',

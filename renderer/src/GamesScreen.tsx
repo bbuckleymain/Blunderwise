@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { GameRecord, LibraryProgress } from '../../shared/api';
+import type { GameRecord, LibraryProgress, OpponentRecordRow } from '../../shared/api';
 import { api } from './api';
+import { Skeleton } from './components/Skeleton';
 import { PgnButtons } from './components/PgnButtons';
 
 const SOURCE: Record<GameRecord['source'], string> = { bot: 'vs bot', lichess: 'Lichess', chesscom: 'Chess.com' };
@@ -13,8 +14,13 @@ export function GamesScreen(props: { onReview: (id: number) => void }): React.JS
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ text: string; error: boolean } | null>(null);
   const [progress, setProgress] = useState<LibraryProgress | null>(null);
+  const [record, setRecord] = useState<OpponentRecordRow[]>([]);
 
-  const refresh = async (): Promise<void> => setGames(await api().games.list());
+  const refresh = async (): Promise<void> => {
+    const [g, r] = await Promise.all([api().games.list(), api().games.record()]);
+    setGames(g);
+    setRecord(r);
+  };
   useEffect(() => {
     void refresh();
     void api().settings.get().then((s) => {
@@ -45,7 +51,7 @@ export function GamesScreen(props: { onReview: (id: number) => void }): React.JS
       return `Fetched ${r.fetched} games, ${r.added} new. Click "Analyse all" to add them to your report and drills.`;
     });
 
-  if (!games) return <div className="panel">Loading…</div>;
+  if (!games) return <Skeleton />;
   const unanalyzed = games.filter((g) => !g.analyzed).length;
 
   return (
@@ -91,12 +97,40 @@ export function GamesScreen(props: { onReview: (id: number) => void }): React.JS
               {progress.moves ? ` · move ${progress.move}/${progress.moves}` : ''}
             </div>
             <div className="progress">
-              <div className="progress-bar" style={{ width: `${Math.round((100 * (progress.game + (progress.moves ? progress.move / progress.moves : 0))) / progress.games)}%` }} />
+              <div className="progress-bar" style={{ transform: `scaleX(${(progress.game + (progress.moves ? progress.move / progress.moves : 0)) / progress.games})` }} />
             </div>
           </>
         )}
         {msg && <div className={msg.error ? 'error' : 'ok'}>{msg.text}</div>}
       </div>
+
+      {record.length > 0 && (
+        <div className="panel">
+          <h2>Your record against the bots</h2>
+          <table className="tag-table">
+            <thead>
+              <tr className="muted small">
+                <td>Opponent</td>
+                <td className="num">Games</td>
+                <td>Won / drawn / lost</td>
+                <td>Last played</td>
+              </tr>
+            </thead>
+            <tbody>
+              {record.map((r) => (
+                <tr key={r.opponent}>
+                  <td className="tag-name">{r.opponent}</td>
+                  <td className="num">{r.games}</td>
+                  <td>
+                    {r.wins} / {r.draws} / {r.losses} <span className="muted small">({Math.round((100 * (r.wins + r.draws / 2)) / r.games)}%)</span>
+                  </td>
+                  <td className="muted">{new Date(r.lastPlayed).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="panel games">
         <h2>Your games ({games.length})</h2>

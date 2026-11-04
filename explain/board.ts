@@ -266,14 +266,30 @@ export function parseUci(uci: string): ParsedUci {
 export function settledMaterial(fen: string, pov: Color, maxDepth = 6): number {
   const chess = new Chess(fen);
   const stm = chess.turn();
-  const v = quiesce(chess, maxDepth, -Infinity, Infinity);
+  const v = quiesce(chess, maxDepth, -Infinity, Infinity, { nodes: QUIESCE_NODE_BUDGET });
   return stm === pov ? v : -v;
 }
 
-function quiesce(chess: Chess, depth: number, alpha: number, beta: number): number {
+/** Material balance straight from chess.js's board (no FEN round trip: this runs once per search node). */
+function balanceOf(chess: Chess, color: Color): number {
+  let sum = 0;
+  for (const row of chess.board()) {
+    for (const p of row) {
+      if (!p || p.type === 'k') continue;
+      sum += p.color === color ? PIECE_VALUE[p.type] : -PIECE_VALUE[p.type];
+    }
+  }
+  return sum;
+}
+
+/** Hard cap on captures explored per call, so a very tactical position can never stall the coach. */
+const QUIESCE_NODE_BUDGET = 250;
+
+function quiesce(chess: Chess, depth: number, alpha: number, beta: number, budget: { nodes: number }): number {
   const stm = chess.turn();
-  const standPat = materialBalance(Board.fromFen(chess.fen()), stm);
-  if (depth === 0) return standPat;
+  const standPat = balanceOf(chess, stm);
+  budget.nodes -= 1;
+  if (depth === 0 || budget.nodes <= 0) return standPat;
   let a = alpha;
   if (standPat >= beta) return standPat;
   if (standPat > a) a = standPat;
@@ -283,7 +299,7 @@ function quiesce(chess: Chess, depth: number, alpha: number, beta: number): numb
     .sort((x, y) => PIECE_VALUE[y.captured ?? 'p'] - PIECE_VALUE[x.captured ?? 'p']);
   for (const m of captures) {
     chess.move({ from: m.from, to: m.to, promotion: m.promotion });
-    const score = -quiesce(chess, depth - 1, -beta, -a);
+    const score = -quiesce(chess, depth - 1, -beta, -a, budget);
     chess.undo();
     if (score >= beta) return score;
     if (score > a) a = score;

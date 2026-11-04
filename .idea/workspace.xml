@@ -10,7 +10,30 @@
     <configurations />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0392170e-d09b-415b-a95c-276bf702ef56" name="Changes" comment="" />
+    <list default="true" id="0392170e-d09b-415b-a95c-276bf702ef56" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explain/board.ts" beforeDir="false" afterPath="$PROJECT_DIR$/explain/board.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/main/db.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/main.ts" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/uciEngine.ts" beforeDir="false" afterPath="$PROJECT_DIR$/main/uciEngine.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/preload/preload.ts" beforeDir="false" afterPath="$PROJECT_DIR$/preload/preload.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/DrillScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/DrillScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/GamesScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/GamesScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/PlayScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/PlayScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/ReportScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/ReportScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/ReviewScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/ReviewScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/SettingsScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/SettingsScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/components/Board.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/components/Board.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/components/CoachCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/components/CoachCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/components/MoveList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/components/MoveList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/renderer/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/renderer/src/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/smoke.ts" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/smoke.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/engines.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/engines.test.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -32,36 +55,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "cidr.known.project.marker": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "master",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
   }
-}]]></component>
-  <component name="QodanaHighlightedReportService">
-    <option name="localRunNotPublishedPersistedInfo">
-      <LocalReportPersistedInfo>
-        <option name="path" value="/tmp/qodana_output/qodana.sarif.json" />
-        <option name="reportGuid" value="0cb4f770-bf3c-417b-9c91-fc873b961be3" />
-        <option name="reportName" value="Blunderwise/qodana/2026-11-03" />
-      </LocalReportPersistedInfo>
-    </option>
-  </component>
-  <component name="QodanaIsSelectedPersistenceService">
-    <option name="selectedOrLoading" value="true" />
-  </component>
+}</component>
   <component name="QodanaReportsService">
     <option name="descriptions">
       <ReportDescription localRun="true" path="/tmp/qodana_output/qodana.sarif.json" reportGuid="0cb4f770-bf3c-417b-9c91-fc873b961be3" reportId="Blunderwise/qodana/2026-11-03" />
@@ -86,7 +97,9 @@
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
     <MESSAGE value="coach, drills, import, report, hints, Flatpak" />
     <MESSAGE value="Opening book:&#10;The opening is named as you play.&#10;Theory moves get a green dot and aren’t flagged as mistakes.&#10;The Stockfish bot plays varied book moves, and you can ask it to steer into a specific opening.&#10;Opening report: in the Report tab, your results per opening and colour, how many moves you stay in theory, your opening mistakes, and a Drill button.&#10;Coach card in steps: after a blunder, take back, then “What did I miss?” (yellow arrow), then the full explanation.&#10;Endgame trainer:&#10;Eight positions: three basic mates, two pawn endings, Lucena, and two drawing positions to hold.&#10;I checked every one with Stockfish.&#10;Polish: an app icon, game clocks, custom start positions (paste a FEN), PGN copy and save, board colour themes, and move sounds." />
-    <option name="LAST_COMMIT_MESSAGE" value="Opening book:&#10;The opening is named as you play.&#10;Theory moves get a green dot and aren’t flagged as mistakes.&#10;The Stockfish bot plays varied book moves, and you can ask it to steer into a specific opening.&#10;Opening report: in the Report tab, your results per opening and colour, how many moves you stay in theory, your opening mistakes, and a Drill button.&#10;Coach card in steps: after a blunder, take back, then “What did I miss?” (yellow arrow), then the full explanation.&#10;Endgame trainer:&#10;Eight positions: three basic mates, two pawn endings, Lucena, and two drawing positions to hold.&#10;I checked every one with Stockfish.&#10;Polish: an app icon, game clocks, custom start positions (paste a FEN), PGN copy and save, board colour themes, and move sounds." />
+    <MESSAGE value="bug fixes, and opening moves" />
+    <MESSAGE value="flatpack update" />
+    <option name="LAST_COMMIT_MESSAGE" value="flatpack update" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -51,7 +51,7 @@ flatpak run app.blunderwise.Blunderwise
 Notes:
 - `npm run dist` downloads the official Stockfish 17.1 build for CPUs with AVX2 (any CPU that runs CachyOS's
   optimised x86-64-v3 packages has it). For an older CPU: `STOCKFISH_BUILD=x86-64-sse41-popcnt npm run fetch:stockfish -- --force`, then `npm run dist` again.
-- Your data lives in `~/.var/app/app.blunderwise.Blunderwise/config/Blunderwise/`.
+- Your data lives in `~/.var/app/app.blunderwise.Blunderwise/config/blunderwise/`.
 - Sandbox permissions: network (AI coach, game import), display/GPU, your keyring (to encrypt API keys),
   read-only access to your home folder (Maia weights) and to the system's `/usr` plus permission to start host
   programs (to run lc0 for Maia, which isn't bundled).
@@ -131,7 +131,24 @@ and click **Save & restart engines**. Maia then shows up as an opponent in **Pla
   between mistakes, Home/End. Clicking a mistake shows the arrows and the coach card.
 - **Settings**: AI provider and key, board colours, move sounds, bot opening variety, engine paths.
 
-Analyses, explanations, games and drills are stored in `blunderwise.sqlite` in the app's data folder (see above).
+## Your data: it survives updates
+
+Analyses, explanations, games and drills are stored in `blunderwise.sqlite` in the app's data folder
+(`~/.config/blunderwise/` for a normal install, `~/.var/app/app.blunderwise.Blunderwise/config/blunderwise/` for the
+Flatpak). Updating or reinstalling the app does not touch it (for the Flatpak, only
+`flatpak uninstall --delete-data` removes it).
+
+- **Safe updates**: the database has a schema version. When a newer version of the app needs to change the
+  database, the old file is first copied to `backups/pre-migration-...sqlite`, and every game keeps a stable id.
+- **Daily backups**: on start-up the app saves a safety copy to `backups/` if the last one is a day old; the
+  latest 7 are kept. **Settings -> Your data -> Back up now** makes one on demand.
+- **Move or keep your library**: **Export backup** writes your games and drills (with their review schedule) to one
+  `.json` file; **Import backup** merges such a file into any install. Imports never overwrite or duplicate games
+  you already have, and the current database is backed up first. Use this to move between computers, or between
+  the Flatpak and a pacman install, which keep separate data folders. **Export all as PGN** gives every game as
+  standard PGN for other chess software.
+- **Your record against the bots** (per opponent: Stockfish levels, Maia ratings, endgame drills) is shown on the
+  Games screen. After importing a backup, click **Analyse all** to rebuild the report for the imported games.
 
 ## Weaker opponents
 

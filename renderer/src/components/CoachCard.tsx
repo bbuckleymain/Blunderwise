@@ -36,6 +36,7 @@ export function CoachCard(p: CoachCardProps): React.JSX.Element {
           {p.narrating ? 'Coach is thinking…' : p.result.source === 'llm' ? 'Coach' : 'Quick explanation'}
         </span>
       </div>
+      <div className="coach-body" key={p.level}>
       {p.level === 0 && (
         <p className="coach-text">
           That move gives away too much. Take it back and look for something better, or ask the coach for help.
@@ -64,6 +65,7 @@ export function CoachCard(p: CoachCardProps): React.JSX.Element {
           </p>
         </>
       )}
+      </div>
       {(p.onTakeBack || p.onLevel || p.onPlayOn) && (
         <div className="coach-actions">
           {p.onTakeBack && <button className="primary" onClick={p.onTakeBack}>Take back</button>}

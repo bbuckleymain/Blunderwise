@@ -20,6 +20,13 @@ var IPC = {
   gamesSave: "games:save",
   gamesList: "games:list",
   gamesGet: "games:get",
+  gamesRecord: "games:record",
+  dataInfo: "data:info",
+  dataBackupNow: "data:backupNow",
+  dataExportBackup: "data:exportBackup",
+  dataExportPgn: "data:exportPgn",
+  dataImportBackup: "data:importBackup",
+  dataOpenFolder: "data:openFolder",
   reviewAnalyze: "review:analyze",
   reviewProgress: "review:progress",
   settingsGet: "settings:get",
@@ -59,6 +66,7 @@ var api = {
   games: {
     save: (req) => invoke(IPC.gamesSave, req),
     list: () => invoke(IPC.gamesList),
+    record: () => invoke(IPC.gamesRecord),
     get: (id) => invoke(IPC.gamesGet, id)
   },
   library: {
@@ -90,6 +98,14 @@ var api = {
       import_electron.ipcRenderer.on(IPC.reviewProgress, listener);
       return () => import_electron.ipcRenderer.removeListener(IPC.reviewProgress, listener);
     }
+  },
+  data: {
+    info: () => invoke(IPC.dataInfo),
+    backupNow: () => invoke(IPC.dataBackupNow),
+    exportBackup: () => invoke(IPC.dataExportBackup),
+    exportPgn: () => invoke(IPC.dataExportPgn),
+    importBackup: () => invoke(IPC.dataImportBackup),
+    openFolder: () => invoke(IPC.dataOpenFolder)
   },
   settings: {
     get: () => invoke(IPC.settingsGet),

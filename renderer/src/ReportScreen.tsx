@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import type { MotifTag } from '../../explain/types';
 import type { GameRecord, LibraryProgress, OpeningReportRow, ReportData } from '../../shared/api';
 import { api } from './api';
+import { Skeleton } from './components/Skeleton';
 import { MOTIF_LABEL, PHASE_LABEL } from './labels';
 
 function Bar(props: { value: number; max: number; className?: string }): React.JSX.Element {
   const pct = props.max > 0 ? Math.max(2, Math.round((100 * props.value) / props.max)) : 0;
   return (
     <div className="bar-track">
-      <div className={`bar-fill ${props.className ?? ''}`} style={{ width: `${pct}%` }} />
+      <div className={`bar-fill ${props.className ?? ''}`} style={{ transform: `scaleX(${pct / 100})` }} />
     </div>
   );
 }
@@ -30,7 +31,7 @@ export function ReportScreen(props: { onDrill: (tag: MotifTag) => void; onDrillO
     return api().library.onProgress(setProgress);
   }, []);
 
-  if (!report || !games) return <div className="panel">Loading…</div>;
+  if (!report || !games) return <Skeleton />;
   const unanalyzed = games.filter((g) => !g.analyzed).length;
   const analyzeAll = async (): Promise<void> => {
     setProgress({ game: 0, games: unanalyzed, move: 0, moves: 0 });
@@ -58,7 +59,7 @@ export function ReportScreen(props: { onDrill: (tag: MotifTag) => void; onDrillO
                 {progress.moves ? ` · move ${progress.move}/${progress.moves}` : ''}
               </div>
               <div className="progress">
-                <div className="progress-bar" style={{ width: `${progress.games ? Math.round((100 * (progress.game + (progress.moves ? progress.move / progress.moves : 0))) / progress.games) : 0}%` }} />
+                <div className="progress-bar" style={{ transform: `scaleX(${progress.games ? (progress.game + (progress.moves ? progress.move / progress.moves : 0)) / progress.games : 0})` }} />
               </div>
             </>
           ) : (

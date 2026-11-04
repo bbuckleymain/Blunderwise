@@ -1,6 +1,8 @@
-import { BrowserWindow, app, ipcMain, shell } from 'electron';
+import { BrowserWindow, app, dialog, ipcMain, shell } from 'electron';
+import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { IPC, type BotMoveRequest, type DrillFilter, type LlmProvider, type MoveCheckRequest, type SaveGameRequest, type Settings } from '../shared/api';
+import { IPC, type BotMoveRequest, type DataInfo, type DrillFilter, type LlmProvider, type MoveCheckRequest, type SaveGameRequest, type Settings } from '../shared/api';
+import { parseBackup } from './backupFile';
 import { Library } from './library';
 import { families as bookFamilies, pickBookMove, trackOpening } from '../openings/book';
 import type { Color, MistakeContext } from '../explain/types';
@@ -43,7 +45,14 @@ function createWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
-  db = new Db(path.join(app.getPath('userData'), 'blunderwise.sqlite'));
+  const dataDir = app.getPath('userData');
+  const backupDir = path.join(dataDir, 'backups');
+  db = new Db(path.join(dataDir, 'blunderwise.sqlite'));
+  try {
+    db.backupIfDue(backupDir); // a rolling daily safety copy (the last 7 are kept)
+  } catch (e) {
+    console.error('Automatic backup failed', e);
+  }
   const settings = new SettingsStore(db);
   engines = new EngineManager(() => settings.get(), process.resourcesPath);
   const coach = new CoachService(engines, db, settings);
@@ -67,6 +76,53 @@ void app.whenReady().then(() => {
         ? await eng.maiaEngine(req.maiaRating).getBestMove(req.fen, { nodes: 1 })
         : await eng.opponent().getBestMove(req.fen, { skill: req.skill, movetimeMs: req.movetimeMs });
     return r.bestMove;
+  });
+  // --- your data: where it lives, backups, moving it between installs
+  const todayStamp = (): string => new Date().toISOString().slice(0, 10);
+  const parent = (): BrowserWindow | undefined => BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+  ipcMain.handle(IPC.gamesRecord, () => store.opponentRecord());
+  ipcMain.handle(IPC.dataInfo, (): DataInfo => {
+    const c = store.counts();
+    return { folder: dataDir, databaseBytes: statSync(store.path).size, games: c.games, drills: c.drills, backups: Db.listBackups(backupDir) };
+  });
+  ipcMain.handle(IPC.dataBackupNow, () => {
+    mkdirSync(backupDir, { recursive: true });
+    const name = `blunderwise-${new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-')}-manual.sqlite`;
+    store.backupTo(path.join(backupDir, name));
+    return name;
+  });
+  ipcMain.handle(IPC.dataExportBackup, async () => {
+    const win = parent();
+    const options = { title: 'Save a backup of your games', defaultPath: `blunderwise-backup-${todayStamp()}.json`, filters: [{ name: 'Blunderwise backup', extensions: ['json'] }] };
+    const r = win ? await dialog.showSaveDialog(win, options) : await dialog.showSaveDialog(options);
+    if (r.canceled || !r.filePath) return null;
+    const data = store.exportAll();
+    writeFileSync(r.filePath, JSON.stringify(data));
+    return { path: r.filePath, games: data.games.length, drills: data.drills.length };
+  });
+  ipcMain.handle(IPC.dataExportPgn, async () => {
+    const win = parent();
+    const options = { title: 'Save all games as PGN', defaultPath: `blunderwise-games-${todayStamp()}.pgn`, filters: [{ name: 'PGN', extensions: ['pgn'] }] };
+    const r = win ? await dialog.showSaveDialog(win, options) : await dialog.showSaveDialog(options);
+    if (r.canceled || !r.filePath) return null;
+    const pgns = store.allPgns();
+    writeFileSync(r.filePath, `${pgns.join('\n\n')}\n`);
+    return { path: r.filePath, games: pgns.length };
+  });
+  ipcMain.handle(IPC.dataImportBackup, async () => {
+    const win = parent();
+    const options = { title: 'Choose a Blunderwise backup', properties: ['openFile' as const], filters: [{ name: 'Blunderwise backup', extensions: ['json'] }] };
+    const r = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options);
+    const file = r.filePaths[0];
+    if (r.canceled || !file) return null;
+    const backup = parseBackup(readFileSync(file, 'utf8')); // throws a readable error for a wrong or damaged file
+    // Protect what is already there before merging.
+    mkdirSync(backupDir, { recursive: true });
+    store.backupTo(path.join(backupDir, `pre-import-${new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-')}.sqlite`));
+    return store.importBackup(backup);
+  });
+  ipcMain.handle(IPC.dataOpenFolder, async () => {
+    await shell.openPath(dataDir);
   });
   ipcMain.handle(IPC.prefetch, (_e, fen: string) => coach.prefetch(fen));
   ipcMain.handle(IPC.checkMove, (_e, req: MoveCheckRequest) => coach.checkMove(req));

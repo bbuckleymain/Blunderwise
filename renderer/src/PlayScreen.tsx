@@ -205,6 +205,10 @@ export function PlayScreen(props: { onReview: (gameId: number) => void; launch?:
         setError('That position is not valid. Check the FEN.');
         return;
       }
+      if (c.isGameOver()) {
+        setError(c.isCheckmate() ? 'That position is already checkmate: choose one where the game is still going.' : 'That position is already a draw: choose one where the game is still going.');
+        return;
+      }
       gen.current += 1;
       chess.current = c;
       goalRef.current = endgame;
@@ -493,6 +497,7 @@ export function PlayScreen(props: { onReview: (gameId: number) => void; launch?:
           shapes={shapes}
           highlight={viewing ? [] : highlight}
           hintSquare={activeHint ? uciFrom(activeHint.uci) : undefined}
+          animate={!viewing}
           onMove={onBoardMove}
         />
         {clockView && phase !== 'setup' && (
@@ -503,10 +508,10 @@ export function PlayScreen(props: { onReview: (gameId: number) => void; launch?:
         )}
         {phase !== 'setup' && (
           <div className="nav-row">
-            <button title="Start (Home)" onClick={() => setViewPly(-1)} disabled={history.length === 0}>⏮</button>
-            <button title="Back (←)" onClick={() => setViewPly((v) => Math.max(-1, (v ?? history.length - 1) - 1))} disabled={history.length === 0 || viewPly === -1}>◀</button>
-            <button title="Forward (→)" onClick={() => setViewPly((v) => (v === null || v + 1 >= history.length - 1 ? null : v + 1))} disabled={!viewing}>▶</button>
-            <button title="Back to the game (End)" onClick={() => setViewPly(null)} disabled={!viewing}>⏭</button>
+            <button aria-label="Go to the start of the game" title="Start (Home)" onClick={() => setViewPly(-1)} disabled={history.length === 0}>⏮</button>
+            <button aria-label="Previous move" title="Back (←)" onClick={() => setViewPly((v) => Math.max(-1, (v ?? history.length - 1) - 1))} disabled={history.length === 0 || viewPly === -1}>◀</button>
+            <button aria-label="Next move" title="Forward (→)" onClick={() => setViewPly((v) => (v === null || v + 1 >= history.length - 1 ? null : v + 1))} disabled={!viewing}>▶</button>
+            <button aria-label="Back to the current position" title="Back to the game (End)" onClick={() => setViewPly(null)} disabled={!viewing}>⏭</button>
             {viewing && <span className="viewing">Looking back · move {viewPly + 1} of {history.length}</span>}
             <span className="muted arrows-hint">Right-click and drag to draw arrows</span>
           </div>
@@ -644,34 +649,42 @@ export function PlayScreen(props: { onReview: (gameId: number) => void; launch?:
               </div>
             )}
             <div className="toolbar">
-              <button className="primary" onClick={() => void showHint()} disabled={!showMine || hintLoading || activeHint?.level === 2}>
-                {hintLoading ? 'Thinking…' : activeHint ? 'Show the move' : 'Hint'}
-              </button>
-              <button onClick={() => void showThreat()} disabled={!showMine || threatLoading} title="What would my opponent do if I passed?">
-                {threatLoading ? 'Checking…' : 'Threats?'}
-              </button>
-              <button onClick={showPlan} disabled={!showMine} title="Ideas for what to do in this position">
-                Plan
-              </button>
-              <button onClick={takeBackMove} disabled={!canTakeBack || viewing}>Take back</button>
-              <button onClick={() => setFlipped((f) => !f)}>Flip board</button>
-              {phase !== 'over' && <button onClick={resign}>Resign</button>}
-              <button
-                onClick={() => {
-                  gen.current += 1;
-                  goalRef.current = null;
-                  setGoal(null);
-                  setPhase('setup');
-                }}
-              >
-                New game
-              </button>
-              {phase === 'over' && over?.gameId != null && (
-                <button className="primary" onClick={() => over.gameId != null && props.onReview(over.gameId)}>
-                  Review game
+              <div className="tool-group">
+                <button className="accent" onClick={() => void showHint()} disabled={!showMine || hintLoading || activeHint?.level === 2}>
+                  {hintLoading ? 'Thinking…' : activeHint ? 'Show the move' : 'Hint'}
                 </button>
+                <button onClick={() => void showThreat()} disabled={!showMine || threatLoading} title="What would my opponent do if I passed?">
+                  {threatLoading ? 'Checking…' : 'Threats?'}
+                </button>
+                <button onClick={showPlan} disabled={!showMine} title="Ideas for what to do in this position">
+                  Plan
+                </button>
+              </div>
+              <div className="tool-group">
+                <button onClick={takeBackMove} disabled={!canTakeBack || viewing}>Take back</button>
+                <button onClick={() => setFlipped((f) => !f)}>Flip board</button>
+                {phase !== 'over' && <button onClick={resign}>Resign</button>}
+                <button
+                  onClick={() => {
+                    gen.current += 1;
+                    goalRef.current = null;
+                    setGoal(null);
+                    setPhase('setup');
+                  }}
+                >
+                  New game
+                </button>
+              </div>
+              {phase === 'over' && (
+                <div className="tool-group">
+                  {over?.gameId != null && (
+                    <button className="primary" onClick={() => over.gameId != null && props.onReview(over.gameId)}>
+                      Review game
+                    </button>
+                  )}
+                  <PgnButtons pgn={chess.current.pgn()} name={`blunderwise-${new Date().toISOString().slice(0, 10)}`} />
+                </div>
               )}
-              {phase === 'over' && <PgnButtons pgn={chess.current.pgn()} name={`blunderwise-${new Date().toISOString().slice(0, 10)}`} />}
             </div>
             {phase === 'over' && over?.note && <div className={over.note.startsWith('Goal reached') ? 'ok-box' : 'bad-box'}>{over.note}</div>}
             {activeHint && (
@@ -682,7 +695,7 @@ export function PlayScreen(props: { onReview: (gameId: number) => void; launch?:
               <div className="info-box">
                 <strong>Ideas for you</strong>
                 {activePlan.items.map((it, i) => (
-                  <button key={it.id} className="plan-item" onClick={() => setPlanFocus(planFocus === i ? null : i)} title="Click to highlight the squares">
+                  <button key={it.id} className="plan-item" style={{ '--i': i } as React.CSSProperties} onClick={() => setPlanFocus(planFocus === i ? null : i)} title="Click to highlight the squares">
                     {it.text}
                   </button>
                 ))}

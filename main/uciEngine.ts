@@ -104,7 +104,10 @@ export class UciEngine implements Engine {
   private search(fen: string, go: string, options: Record<string, string>): Promise<EngineEval> {
     return this.run(async () => {
       await this.ready;
-      for (const [k, v] of Object.entries(options)) this.setOption(k, v);
+      // "Skill Level" sticks to the engine once set: restore full strength for any search that does not ask for a skill.
+      const wanted = { ...options };
+      if (!('Skill Level' in wanted) && this.sentOptions.has('Skill Level')) wanted['Skill Level'] = '20';
+      for (const [k, v] of Object.entries(wanted)) this.setOption(k, v);
       this.send(`position fen ${fen}`);
       await this.sync();
       let cp: number | null = 0;

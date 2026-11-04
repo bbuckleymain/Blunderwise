@@ -1,18 +1,54 @@
+import { createHash, randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
+import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { EngineEval } from '../engine/types';
 import type { KeyValueStore } from '../explain/cache';
 import type { ReviewState } from '../analysis/spacedRepetition';
 import type { Color, MotifTag } from '../explain/types';
-import type { DrillFilter, DrillRecord, GameRecord, MistakeRow, OpeningReportRow, ReportData, SaveGameRequest } from '../shared/api';
+import type {
+  BackupFile,
+  BackupFileInfo,
+  DrillFilter,
+  DrillRecord,
+  GameRecord,
+  ImportBackupResult,
+  MistakeRow,
+  OpeningReportRow,
+  OpponentRecordRow,
+  ReportData,
+  SaveGameRequest,
+} from '../shared/api';
 import { openingOfPgn } from './gameOpening';
 import type { ImportedGame } from './importers';
+
+/** Bump when the schema changes. Older databases are backed up automatically before they are migrated. */
+export const SCHEMA_VERSION = 2;
+export const BACKUP_FORMAT = 'blunderwise-backup';
+
+/** A stable identity for a game, so the same game is never stored twice (re-imports, restored backups). */
+export function gameUid(createdAt: string, pgn: string): string {
+  return `bot:${createHash('sha1').update(`${createdAt}\n${pgn}`).digest('hex').slice(0, 20)}`;
+}
+
+const stamp = (d: Date): string => d.toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
 
 /** SQLite storage via Node's built-in node:sqlite (no native module to rebuild for Electron). */
 export class Db {
   private readonly db: DatabaseSync;
+  private readonly file: string;
 
   constructor(file: string) {
+    this.file = file;
     this.db = new DatabaseSync(file);
+    // Safety net: an existing database from an older version is copied aside before anything is changed.
+    const version = Number((this.db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version);
+    const hasData = this.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'games'").get() !== undefined;
+    if (file !== ':memory:' && hasData && version < SCHEMA_VERSION) {
+      const dir = path.join(path.dirname(file), 'backups');
+      mkdirSync(dir, { recursive: true });
+      this.backupTo(path.join(dir, `pre-migration-v${version}-${stamp(new Date())}.sqlite`));
+    }
     this.db.exec(`
       PRAGMA journal_mode = WAL;
       CREATE TABLE IF NOT EXISTS games (
@@ -102,6 +138,164 @@ export class Db {
     this.db.exec(
       "UPDATE drills SET phase = (SELECT phase FROM mistakes WHERE mistakes.game_id = drills.game_id AND mistakes.fen = drills.fen AND mistakes.played_uci = drills.played_uci) WHERE phase IS NULL AND game_id IS NOT NULL",
     );
+    // Every game gets a stable unique id (imports use the site's id; bot games hash their date and moves).
+    if (!cols.has('uid')) this.db.exec('ALTER TABLE games ADD COLUMN uid TEXT');
+    const missing = this.db.prepare('SELECT id, created_at, pgn, external_id FROM games WHERE uid IS NULL').all() as {
+      id: number;
+      created_at: string;
+      pgn: string;
+      external_id: string | null;
+    }[];
+    for (const g of missing) {
+      this.db.prepare('UPDATE games SET uid = ? WHERE id = ?').run(g.external_id ?? gameUid(g.created_at, g.pgn), Number(g.id));
+    }
+    this.db.exec('CREATE UNIQUE INDEX IF NOT EXISTS games_uid ON games(uid)');
+    this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+  }
+
+  // ------------------------------------------------------------------ backups and portability
+
+  /** Write a consistent copy of the whole database (safe while the app is running). */
+  backupTo(dest: string): void {
+    if (existsSync(dest)) unlinkSync(dest);
+    this.db.exec(`VACUUM INTO '${dest.replace(/'/g, "''")}'`);
+  }
+
+  /**
+   * Keep rolling daily backups in `dir`: a new one when the newest is over `minAgeMs` old,
+   * and only the latest `keep` rolling backups are retained (pre-migration copies are never pruned here).
+   * Returns the new backup's file name, or null when one was recent enough.
+   */
+  backupIfDue(dir: string, now: Date = new Date(), keep = 7, minAgeMs = 20 * 3600_000): string | null {
+    mkdirSync(dir, { recursive: true });
+    const rolling = readdirSync(dir)
+      .filter((f) => /^blunderwise-\d{8}-\d{6}\.sqlite$/.test(f))
+      .map((f) => ({ f, t: statSync(path.join(dir, f)).mtimeMs }))
+      .sort((a, b) => b.t - a.t);
+    if (rolling[0] && now.getTime() - rolling[0].t < minAgeMs) return null;
+    const name = `blunderwise-${stamp(now)}.sqlite`;
+    this.backupTo(path.join(dir, name));
+    for (const old of rolling.slice(keep - 1)) unlinkSync(path.join(dir, old.f));
+    return name;
+  }
+
+  static listBackups(dir: string): BackupFileInfo[] {
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir)
+      .filter((f) => f.endsWith('.sqlite'))
+      .map((f) => {
+        const s = statSync(path.join(dir, f));
+        return { name: f, bytes: s.size, at: s.mtime.toISOString() };
+      })
+      .sort((a, b) => b.at.localeCompare(a.at));
+  }
+
+  /** Games and drills (with their spaced-repetition schedule) as a portable, version-independent file. */
+  exportAll(): BackupFile {
+    const games = (this.db.prepare('SELECT uid, created_at, my_color, opponent, result, pgn, source, external_id FROM games ORDER BY created_at').all() as Record<string, unknown>[]).map(
+      (r) => ({
+        uid: String(r.uid),
+        createdAt: String(r.created_at),
+        myColor: (r.my_color === 'b' ? 'b' : 'w') as Color,
+        opponent: String(r.opponent),
+        result: String(r.result),
+        pgn: String(r.pgn),
+        source: String(r.source),
+        externalId: r.external_id === null ? null : String(r.external_id),
+      }),
+    );
+    const drills = (
+      this.db
+        .prepare(
+          'SELECT d.*, g.uid AS game_uid FROM drills d LEFT JOIN games g ON g.id = d.game_id ORDER BY d.id',
+        )
+        .all() as Record<string, unknown>[]
+    ).map((r) => ({
+      gameUid: r.game_uid === null || r.game_uid === undefined ? null : String(r.game_uid),
+      fen: String(r.fen),
+      myColor: (r.my_color === 'b' ? 'b' : 'w') as Color,
+      playedUci: String(r.played_uci),
+      playedSan: String(r.played_san),
+      bestUci: String(r.best_uci),
+      bestSan: String(r.best_san),
+      classification: String(r.classification),
+      tags: String(r.tags).split(',').filter(Boolean),
+      opening: r.opening === null || r.opening === undefined ? null : String(r.opening),
+      phase: r.phase === null || r.phase === undefined ? null : String(r.phase),
+      createdAt: Number(r.created_at),
+      dueAt: Number(r.due_at),
+      intervalDays: Number(r.interval_days),
+      ease: Number(r.ease),
+      reps: Number(r.reps),
+      lapses: Number(r.lapses),
+    }));
+    return { format: BACKUP_FORMAT, version: 1, exportedAt: new Date().toISOString(), games, drills };
+  }
+
+  /** Merge a backup into this database. Anything already here (same game id, same drill position) is kept as is. */
+  importBackup(data: BackupFile): ImportBackupResult {
+    const insGame = this.db.prepare(
+      'INSERT OR IGNORE INTO games (created_at, my_color, opponent, result, pgn, source, external_id, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    );
+    let games = 0;
+    let skipped = 0;
+    for (const g of data.games) {
+      const r = insGame.run(g.createdAt, g.myColor, g.opponent, g.result, g.pgn, g.source, g.externalId, g.uid);
+      if (Number(r.changes) > 0) {
+        games += 1;
+        this.setGameOpening(Number(r.lastInsertRowid), g.pgn);
+      } else skipped += 1;
+    }
+    const idOf = this.db.prepare('SELECT id FROM games WHERE uid = ?');
+    const insDrill = this.db.prepare(
+      'INSERT OR IGNORE INTO drills (fen, my_color, played_uci, played_san, best_uci, best_san, classification, tags, game_id, created_at, due_at, interval_days, ease, reps, lapses, opening, phase) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    );
+    let drills = 0;
+    for (const d of data.drills) {
+      const row = d.gameUid ? (idOf.get(d.gameUid) as { id: number } | undefined) : undefined;
+      const r = insDrill.run(d.fen, d.myColor, d.playedUci, d.playedSan, d.bestUci, d.bestSan, d.classification, d.tags.join(','), row ? Number(row.id) : null, d.createdAt, d.dueAt, d.intervalDays, d.ease, d.reps, d.lapses, d.opening, d.phase);
+      if (Number(r.changes) > 0) drills += 1;
+    }
+    return { games, drills, skipped };
+  }
+
+  counts(): { games: number; drills: number } {
+    const n = (sql: string): number => Number((this.db.prepare(sql).get() as { n: number }).n);
+    return { games: n('SELECT COUNT(*) AS n FROM games'), drills: n('SELECT COUNT(*) AS n FROM drills') };
+  }
+
+  get path(): string {
+    return this.file;
+  }
+
+  /** Your results against each of the app's own opponents (bots, endgame trainer), most played first. */
+  opponentRecord(): OpponentRecordRow[] {
+    const rows = this.db.prepare("SELECT opponent, my_color, result, created_at FROM games WHERE source = 'bot'").all() as {
+      opponent: string;
+      my_color: string;
+      result: string;
+      created_at: string;
+    }[];
+    const map = new Map<string, OpponentRecordRow>();
+    for (const r of rows) {
+      const color = r.my_color === 'b' ? 'b' : 'w';
+      const won = (r.result === '1-0' && color === 'w') || (r.result === '0-1' && color === 'b');
+      const lost = (r.result === '1-0' && color === 'b') || (r.result === '0-1' && color === 'w');
+      const cur = map.get(r.opponent) ?? { opponent: r.opponent, games: 0, wins: 0, draws: 0, losses: 0, lastPlayed: '' };
+      map.set(r.opponent, {
+        ...cur,
+        games: cur.games + 1,
+        wins: cur.wins + (won ? 1 : 0),
+        losses: cur.losses + (lost ? 1 : 0),
+        draws: cur.draws + (r.result === '1/2-1/2' ? 1 : 0),
+        lastPlayed: r.created_at > cur.lastPlayed ? r.created_at : cur.lastPlayed,
+      });
+    }
+    return [...map.values()].sort((a, b) => b.games - a.games || b.lastPlayed.localeCompare(a.lastPlayed));
+  }
+
+  allPgns(): string[] {
+    return (this.db.prepare('SELECT pgn FROM games ORDER BY created_at').all() as { pgn: string }[]).map((r) => r.pgn);
   }
 
   private setGameOpening(id: number, pgn: string): void {
@@ -114,11 +308,11 @@ export class Db {
   /** Insert imported games, skipping ones already in the library. Returns how many were new. */
   importGames(games: readonly ImportedGame[]): number {
     const stmt = this.db.prepare(
-      'INSERT OR IGNORE INTO games (created_at, my_color, opponent, result, pgn, source, external_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT OR IGNORE INTO games (created_at, my_color, opponent, result, pgn, source, external_id, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     );
     let added = 0;
     for (const g of games) {
-      const r = stmt.run(g.playedAt, g.myColor, g.opponent, g.result, g.pgn, g.source, g.externalId);
+      const r = stmt.run(g.playedAt, g.myColor, g.opponent, g.result, g.pgn, g.source, g.externalId, g.externalId);
       if (Number(r.changes) > 0) {
         added += 1;
         this.setGameOpening(Number(r.lastInsertRowid), g.pgn);
@@ -290,9 +484,10 @@ export class Db {
   }
 
   saveGame(g: SaveGameRequest): number {
+    const createdAt = new Date().toISOString();
     const r = this.db
-      .prepare('INSERT INTO games (created_at, my_color, opponent, result, pgn) VALUES (?, ?, ?, ?, ?)')
-      .run(new Date().toISOString(), g.myColor, g.opponent, g.result, g.pgn);
+      .prepare('INSERT INTO games (created_at, my_color, opponent, result, pgn, uid) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(createdAt, g.myColor, g.opponent, g.result, g.pgn, `bot:${randomUUID()}`); // random: two games can never collide
     const id = Number(r.lastInsertRowid);
     this.setGameOpening(id, g.pgn);
     return id;
@@ -316,7 +511,7 @@ export class Db {
 
   listGames(): GameRecord[] {
     return this.db
-      .prepare('SELECT * FROM games ORDER BY created_at DESC LIMIT 500')
+      .prepare('SELECT * FROM games ORDER BY created_at DESC LIMIT 5000')
       .all()
       .map((r) => Db.toGame(r as Record<string, unknown>));
   }

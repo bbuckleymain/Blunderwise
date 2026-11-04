@@ -91,6 +91,14 @@ describe('UciEngine (real Stockfish, WASM build)', () => {
     expect(r.mate).toBe(1);
   }, 30000);
 
+  it('a weak-skill search does not leave the engine weakened for later analysis', async () => {
+    await sf.getBestMove('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', { skill: 0, movetimeMs: 50 });
+    for (let i = 0; i < 3; i++) {
+      const r = await sf.evaluate('6k1/5ppp/8/8/2r5/8/3K1PPP/2R5 w - - 0 1', 8);
+      expect(r.bestMove).toBe('c1c4'); // free rook: full strength finds it every time
+    }
+  }, 60000);
+
   it('serialises concurrent searches and applies skill level', async () => {
     const [a, b] = await Promise.all([
       sf.getBestMove('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', { skill: 0, movetimeMs: 100 }),

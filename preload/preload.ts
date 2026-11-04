@@ -23,6 +23,7 @@ const api: CoachApi = {
   games: {
     save: (req) => invoke(IPC.gamesSave, req),
     list: () => invoke(IPC.gamesList),
+    record: () => invoke(IPC.gamesRecord),
     get: (id) => invoke(IPC.gamesGet, id),
   },
   library: {
@@ -54,6 +55,14 @@ const api: CoachApi = {
       ipcRenderer.on(IPC.reviewProgress, listener);
       return () => ipcRenderer.removeListener(IPC.reviewProgress, listener);
     },
+  },
+  data: {
+    info: () => invoke(IPC.dataInfo),
+    backupNow: () => invoke(IPC.dataBackupNow),
+    exportBackup: () => invoke(IPC.dataExportBackup),
+    exportPgn: () => invoke(IPC.dataExportPgn),
+    importBackup: () => invoke(IPC.dataImportBackup),
+    openFolder: () => invoke(IPC.dataOpenFolder),
   },
   settings: {
     get: () => invoke(IPC.settingsGet),
